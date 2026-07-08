@@ -17,6 +17,7 @@ class ZoneEditorScreen extends ConsumerStatefulWidget {
 class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
   final List<Offset> _points = [];
   final _nameController = TextEditingController();
+  int? _draggingIndex;
 
   static const double _meterToPixel = 50;
   static const double _offset = 4;
@@ -29,10 +30,19 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
     super.dispose();
   }
 
-  void _addPoint(Offset p) => setState(() => _points.add(p));
+  int? _findNearVertex(Offset pos) {
+    for (int i = 0; i < _points.length; i++) {
+      if ((_points[i] - pos).distance <= 20) return i;
+    }
+    return null;
+  }
+
+  void _addPoint(Offset p) => setState(() { _points.add(p); _draggingIndex = null; });
+
+  void _startDrag(int index) => setState(() => _draggingIndex = index);
 
   void _undo() {
-    if (_points.isNotEmpty) setState(() => _points.removeLast());
+    if (_points.isNotEmpty) setState(() { _points.removeLast(); _draggingIndex = null; });
   }
 
   void _save(AppStrings s) {
@@ -50,7 +60,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           FilledButton(onPressed: () {
             final name = _nameController.text.isEmpty ? '${s.getString("z_editor_default_name")}${Random().nextInt(100)}' : _nameController.text;
             ref.read(appStateProvider.notifier).addZone(CustomZone(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
-            _nameController.clear(); _points.clear();
+            _nameController.clear(); _points.clear(); _draggingIndex = null;
             Navigator.pop(context); setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.format('z_editor_saved', args: {'name': name}))));
           }, child: Text(s.getString('z_editor_save'))),
@@ -87,7 +97,10 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Row(children: [
             Icon(Icons.touch_app, size: 14, color: Colors.grey.shade400), const SizedBox(width: 6),
-            Text(s.format('z_editor_hint', args: {'count': '${_points.length}'}), style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+            Text(
+              _draggingIndex != null ? '拖拽顶点${_draggingIndex! + 1}...' : '双击添加  拖拽移动  共${_points.length}个顶点',
+              style: TextStyle(fontSize: 12, color: _draggingIndex != null ? Colors.yellow : Colors.grey.shade400),
+            ),
             const Spacer(),
             _infoChip(isConnected ? '检测 ${personDots.length} 人' : '未连接', isConnected ? Colors.green : Colors.grey),
             const SizedBox(width: 6),
@@ -98,13 +111,41 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
         ),
         // Canvas
         Expanded(
-          child: InteractiveViewer(
+            child: InteractiveViewer(
             minScale: 0.5, maxScale: 3.0,
+            panEnabled: _draggingIndex == null,
             child: GestureDetector(
-              onTapDown: (d) => _addPoint(d.localPosition),
+              onTapUp: (d) {
+                // Don't add if tapped near an existing vertex (let pan handle that)
+              },
+              onPanStart: (d) {
+                final near = _findNearVertex(d.localPosition);
+                if (near != null) {
+                  _startDrag(near);
+                }
+              },
+              onPanUpdate: (d) {
+                if (_draggingIndex != null) {
+                  setState(() => _points[_draggingIndex!] = d.localPosition);
+                }
+              },
+              onPanEnd: (_) {
+                setState(() => _draggingIndex = null);
+              },
+              onTap: () {}, // absorb taps, add via long press or explicit add button
+              onDoubleTapDown: (d) {
+                final near = _findNearVertex(d.localPosition);
+                if (near != null) {
+                  // Double tap near vertex: Start dragging
+                  _startDrag(near);
+                } else {
+                  // Double tap empty space: Add new vertex
+                  _addPoint(d.localPosition);
+                }
+              },
               child: CustomPaint(
                 size: const Size(400, 400),
-                painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField),
+                painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex),
               ),
             ),
           ),
@@ -148,8 +189,9 @@ class _RoomPainter extends CustomPainter {
   final List<_PersonDot> persons;
   final List<_SensorDot> sensors;
   final SignalField? signalField;
+  final int? draggingIndex;
 
-  _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField});
+  _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField, this.draggingIndex});
 
   // Color scale: blue (weak) → green → yellow → orange → red (strong)
   static Color _heatColor(double t) {
@@ -265,6 +307,8 @@ class _RoomPainter extends CustomPainter {
     final fill = Paint()..color = Colors.cyan.withValues(alpha: 0.08)..style = PaintingStyle.fill;
     final stroke = Paint()..color = Colors.cyan.withValues(alpha: 0.5)..strokeWidth = 2..style = PaintingStyle.stroke;
     final dot = Paint()..color = Colors.cyan..style = PaintingStyle.fill;
+    final dragDot = Paint()..color = Colors.yellow..style = PaintingStyle.fill;
+    final halo = Paint()..color = Colors.yellow.withValues(alpha: 0.3)..style = PaintingStyle.fill;
 
     if (points.length >= 3) {
       final path = Path()..addPolygon(points, true);
@@ -273,8 +317,13 @@ class _RoomPainter extends CustomPainter {
       canvas.drawLine(points[0], points[1], stroke);
     }
     for (int i = 0; i < points.length; i++) {
-      canvas.drawCircle(points[i], 4, dot);
-      final tp = TextPainter(text: TextSpan(text: '${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 9)), textDirection: TextDirection.ltr);
+      if (i == draggingIndex) {
+        canvas.drawCircle(points[i], 10, halo);
+        canvas.drawCircle(points[i], 6, dragDot);
+      } else {
+        canvas.drawCircle(points[i], 4, dot);
+      }
+      final tp = TextPainter(text: TextSpan(text: '${i + 1}', style: TextStyle(color: i == draggingIndex ? Colors.yellow : Colors.white, fontSize: i == draggingIndex ? 11 : 9, fontWeight: i == draggingIndex ? FontWeight.bold : FontWeight.normal)), textDirection: TextDirection.ltr);
       tp.layout(); tp.paint(canvas, points[i] + const Offset(7, -14));
     }
   }
