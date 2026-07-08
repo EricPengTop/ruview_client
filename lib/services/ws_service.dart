@@ -1,0 +1,330 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../models/models.dart';
+
+sealed class SensingMessage {
+  const SensingMessage();
+}
+
+class SensingUpdateMessage extends SensingMessage {
+  final SensingUpdate update;
+  const SensingUpdateMessage(this.update);
+}
+
+enum WsConnectionState { disconnected, connecting, connected }
+
+extension WsConnectionStateLabel on WsConnectionState {
+  String get label {
+    switch (this) {
+      case WsConnectionState.disconnected:
+        return '已断开';
+      case WsConnectionState.connecting:
+        return '连接中';
+      case WsConnectionState.connected:
+        return '已连接';
+    }
+  }
+
+  bool get isConnected => this == WsConnectionState.connected;
+}
+
+class WebSocketService {
+  final String host;
+  final int port;
+  final int _maxReconnectAttempts = 10;
+  final Duration _connectionTimeout = const Duration(seconds: 10);
+  final Duration _heartbeatInterval = const Duration(seconds: 30);
+
+  WebSocketChannel? _channel;
+  Timer? _reconnectTimer;
+  Timer? _heartbeatTimer;
+  StreamSubscription<dynamic>? _subscription;
+  int _reconnectAttempts = 0;
+
+  final _messageController = StreamController<SensingMessage>.broadcast();
+  final _connectionStateController =
+      StreamController<WsConnectionState>.broadcast();
+  final _errorController = StreamController<String>.broadcast();
+
+  Stream<SensingMessage> get messages => _messageController.stream;
+  Stream<WsConnectionState> get connectionState =>
+      _connectionStateController.stream;
+  Stream<String> get errors => _errorController.stream;
+
+  WsConnectionState _state = WsConnectionState.disconnected;
+  WsConnectionState get state => _state;
+
+  WebSocketService({required this.host, this.port = 3001});
+
+  Uri get _wsUri => Uri.parse('ws://$host:$port/ws/sensing');
+
+  Future<void> connect() async {
+    if (_state == WsConnectionState.connected ||
+        _state == WsConnectionState.connecting) {
+      return;
+    }
+
+    _setState(WsConnectionState.connecting);
+
+    try {
+      _channel = WebSocketChannel.connect(_wsUri)
+        ..ready.timeout(_connectionTimeout, onTimeout: () {
+          throw TimeoutException('Connection timeout');
+        });
+
+      await _channel!.ready;
+
+      _setState(WsConnectionState.connected);
+      _reconnectAttempts = 0;
+      _startHeartbeat();
+
+      _subscription = _channel!.stream.listen(
+        _onMessage,
+        onError: _onError,
+        onDone: _onDone,
+        cancelOnError: false,
+      );
+    } catch (e) {
+      _errorController.add('连接失败: $e');
+      _scheduleReconnect();
+    }
+  }
+
+  void _onMessage(dynamic data) {
+    try {
+      if (data is! String) return;
+      final json = jsonDecode(data) as Map<String, dynamic>;
+      final type = json['type'] as String?;
+
+      if (type == 'sensing_update') {
+        _messageController
+            .add(SensingUpdateMessage(SensingUpdate.fromJson(json)));
+      }
+      _resetHeartbeat();
+    } catch (e) {
+      _errorController.add('解析错误: $e');
+    }
+  }
+
+  void _onError(dynamic error) {
+    _errorController.add('WebSocket错误: $error');
+    _cleanup();
+    _scheduleReconnect();
+  }
+
+  void _onDone() {
+    _cleanup();
+    _scheduleReconnect();
+  }
+
+  void _scheduleReconnect() {
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      _setState(WsConnectionState.disconnected);
+      _errorController.add('已达最大重连次数');
+      return;
+    }
+
+    _reconnectAttempts++;
+    final delay = Duration(
+      milliseconds:
+          (1000 * (1 << (_reconnectAttempts - 1))).clamp(1000, 30000),
+    );
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(delay, connect);
+  }
+
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) {
+      _channel?.sink.add(jsonEncode({'type': 'ping'}));
+    });
+  }
+
+  void _resetHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _startHeartbeat();
+  }
+
+  void _setState(WsConnectionState newState) {
+    _state = newState;
+    _connectionStateController.add(newState);
+  }
+
+  void _cleanup() {
+    _heartbeatTimer?.cancel();
+    _subscription?.cancel();
+    _channel?.sink.close();
+    _channel = null;
+  }
+
+  Future<void> disconnect() async {
+    _reconnectTimer?.cancel();
+    _cleanup();
+    _setState(WsConnectionState.disconnected);
+  }
+
+  Future<void> dispose() async {
+    await disconnect();
+    await _messageController.close();
+    await _connectionStateController.close();
+    await _errorController.close();
+  }
+}
+
+class AppState {
+  final WsConnectionState connectionState;
+  final SensingUpdate? latestUpdate;
+  final List<String> log;
+  final String? lastError;
+  final int msgCount;
+
+  const AppState({
+    this.connectionState = WsConnectionState.disconnected,
+    this.latestUpdate,
+    this.log = const [],
+    this.lastError,
+    this.msgCount = 0,
+  });
+
+  AppState copyWith({
+    WsConnectionState? connectionState,
+    SensingUpdate? latestUpdate,
+    List<String>? log,
+    String? lastError,
+    int? msgCount,
+  }) =>
+      AppState(
+        connectionState: connectionState ?? this.connectionState,
+        latestUpdate: latestUpdate ?? this.latestUpdate,
+        log: log ?? this.log,
+        lastError: lastError,
+        msgCount: msgCount ?? this.msgCount,
+      );
+}
+
+class AppStateNotifier extends StateNotifier<AppState> {
+  WebSocketService? _ws;
+  StreamSubscription<SensingMessage>? _msgSub;
+  StreamSubscription<WsConnectionState>? _connSub;
+  StreamSubscription<String>? _errSub;
+
+  AppStateNotifier() : super(const AppState());
+
+  void connect(String host, int port) {
+    _ws?.dispose();
+    _msgSub?.cancel();
+    _connSub?.cancel();
+    _errSub?.cancel();
+
+    _ws = WebSocketService(host: host, port: port);
+
+    _connSub = _ws!.connectionState.listen((connState) {
+      final line =
+          '${DateTime.now().toIso8601String()} 连接状态: ${connState.label}';
+      debugPrint('[RuView] $line');
+      state = state.copyWith(
+        connectionState: connState,
+        log: [...state.log, line],
+      );
+    });
+
+    _errSub = _ws!.errors.listen((err) {
+      final line = '${DateTime.now().toIso8601String()} 错误: $err';
+      debugPrint('[RuView] $line');
+      state = state.copyWith(
+        lastError: err,
+        log: [...state.log, line],
+      );
+    });
+
+    _msgSub = _ws!.messages.listen((msg) {
+      if (msg is SensingUpdateMessage) {
+        final u = msg.update;
+        final count = state.msgCount + 1;
+        final now = DateTime.now();
+
+        final ts =
+            '${now.hour.toString().padLeft(2, '0')}:'
+            '${now.minute.toString().padLeft(2, '0')}:'
+            '${now.second.toString().padLeft(2, '0')}.'
+            '${now.millisecond.toString().padLeft(3, '0')}';
+
+        final presence = u.classification.presence ? '有人' : '无人';
+        final motion = _motionLabel(u.classification.motionLevel);
+        final hr = u.vitalSigns.heartRateBpm;
+        final br = u.vitalSigns.breathingRateBpm;
+        final hrConf = u.vitalSigns.heartbeatConfidence;
+        final brConf = u.vitalSigns.breathingConfidence;
+        final signalQ = u.vitalSigns.signalQuality;
+        final nPersons = u.estimatedPersons;
+        final rssi = u.features.meanRssi;
+        final classifierConf = u.classification.confidence;
+        final tick = u.tick;
+
+        final personDetails = u.persons.isNotEmpty
+            ? u.persons
+                .map((p) => '目标${p.trackId}(置信${(p.confidence * 100).toStringAsFixed(0)}%)')
+                .join(' ')
+            : '-';
+
+        final line =
+            '#$count | $ts | t=$tick | $presence $motion (分类置信${(classifierConf * 100).toStringAsFixed(0)}%) | '
+            '心率=${hr.toStringAsFixed(1)}bpm(可信度${(hrConf * 100).toStringAsFixed(0)}%) '
+            '呼吸率=${br.toStringAsFixed(1)}bpm(可信度${(brConf * 100).toStringAsFixed(0)}%) | '
+            '信号质量=${(signalQ * 100).toStringAsFixed(0)}% | '
+            '人数=$nPersons [$personDetails] | RSSI=${rssi.toStringAsFixed(0)}dBm';
+
+        debugPrint('[RuView] $line');
+
+        state = state.copyWith(
+          latestUpdate: u,
+          msgCount: count,
+          log: [...state.log, line],
+        );
+      }
+    });
+
+    _ws!.connect();
+  }
+
+  void disconnect() {
+    _ws?.disconnect();
+  }
+
+  void clearLog() {
+    state = state.copyWith(log: [], msgCount: 0);
+  }
+
+  String _motionLabel(String level) {
+    switch (level) {
+      case 'present_still':
+        return '静止';
+      case 'present_moving':
+        return '运动中';
+      case 'absent':
+        return '无人';
+      default:
+        return level;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ws?.dispose();
+    _msgSub?.cancel();
+    _connSub?.cancel();
+    _errSub?.cancel();
+    super.dispose();
+  }
+}
+
+final appStateProvider =
+    StateNotifierProvider.autoDispose<AppStateNotifier, AppState>(
+  (ref) => AppStateNotifier(),
+);
