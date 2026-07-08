@@ -52,6 +52,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildMqttCard(notifier, state),
           _section('外观'),
           _buildThemeCard(notifier, state),
+          _section('语言'),
+          _buildLanguageCard(notifier, state),
           _section('关于'),
           _buildAboutCard(context),
           const SizedBox(height: 32),
@@ -444,6 +446,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageCard(AppStateNotifier notifier, AppState state) {
+    return Card(
+      child: SwitchListTile(
+        title: const Text('English / 中文'),
+        subtitle: Text(state.locale == 'zh' ? '当前: 中文' : 'Current: English',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+        value: state.locale == 'en',
+        onChanged: (_) => notifier.toggleLocale(),
+        secondary: const Icon(Icons.language, color: Colors.grey),
       ),
     );
   }

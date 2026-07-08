@@ -220,6 +220,7 @@ class AppState {
   final double brMax;
   final double brMin;
   final List<CustomZone> customZones;
+  final String locale;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -244,6 +245,7 @@ class AppState {
     this.brMax = 25,
     this.brMin = 5,
     this.customZones = const [],
+    this.locale = 'zh',
   });
 
   AppState copyWith({
@@ -269,6 +271,7 @@ class AppState {
     double? brMax,
     double? brMin,
     List<CustomZone>? customZones,
+    String? locale,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -293,6 +296,7 @@ class AppState {
         brMax: brMax ?? this.brMax,
         brMin: brMin ?? this.brMin,
         customZones: customZones ?? this.customZones,
+        locale: locale ?? this.locale,
       );
 }
 
@@ -600,6 +604,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void removeZone(String id) {
     state = state.copyWith(
         customZones: state.customZones.where((z) => z.id != id).toList());
+  }
+
+  void toggleLocale() {
+    state = state.copyWith(locale: state.locale == 'zh' ? 'en' : 'zh');
   }
 
   void togglePause() {

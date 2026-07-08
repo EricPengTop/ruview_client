@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_locale.dart';
 import '../services/ws_service.dart';
 import 'dashboard_screen.dart';
 import 'vitals_screen.dart';
@@ -29,13 +30,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     SecurityScreen(),
   ];
 
-  final _titles = const [
-    '概览',
-    '生命体征',
-    '人体姿态',
-    '区域监控',
-    '告警中心',
-    '安全监控',
+  final _titles = [
+    (AppStrings s) => s.getString('tab_overview'),
+    (AppStrings s) => '生命体征',
+    (AppStrings s) => '人体姿态',
+    (AppStrings s) => '区域监控',
+    (AppStrings s) => '告警中心',
+    (AppStrings s) => '安全监控',
   ];
 
   @override
@@ -44,10 +45,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final notifier = ref.read(appStateProvider.notifier);
     final isConnected = state.connectionState.isConnected;
     final unread = state.unreadAlertCount;
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
+        title: Text(_titles[_currentIndex](s)),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 20),
@@ -69,25 +71,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (i == 4) notifier.markAlertsRead();
         },
         destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: '概览',
+          NavigationDestination(
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard),
+            label: s.getString('tab_overview'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.favorite_outline),
-            selectedIcon: Icon(Icons.favorite),
-            label: '体征',
+          NavigationDestination(
+            icon: const Icon(Icons.favorite_outlined),
+            selectedIcon: const Icon(Icons.favorite),
+            label: s.getString('tab_vitals'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.accessibility_new_outlined),
-            selectedIcon: Icon(Icons.accessibility_new),
-            label: '姿态',
+          NavigationDestination(
+            icon: const Icon(Icons.accessibility_new_outlined),
+            selectedIcon: const Icon(Icons.accessibility_new),
+            label: s.getString('tab_pose'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: '区域',
+          NavigationDestination(
+            icon: const Icon(Icons.map_outlined),
+            selectedIcon: const Icon(Icons.map),
+            label: s.getString('tab_zones'),
           ),
           NavigationDestination(
             icon: Badge(
@@ -100,12 +102,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               label: Text(unread.toString()),
               child: const Icon(Icons.notifications),
             ),
-            label: '告警',
+            label: s.getString('tab_alerts'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.security_outlined),
-            selectedIcon: Icon(Icons.security),
-            label: '安全',
+          NavigationDestination(
+            icon: const Icon(Icons.security_outlined),
+            selectedIcon: const Icon(Icons.security),
+            label: s.getString('tab_security'),
           ),
         ],
       ),
