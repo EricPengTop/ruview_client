@@ -203,6 +203,8 @@ class AppState {
   final List<Alert> alerts;
   final int unreadAlertCount;
   final bool isDarkMode;
+  final bool isPaused;
+  final int pausedIndex;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -214,6 +216,8 @@ class AppState {
     this.alerts = const [],
     this.unreadAlertCount = 0,
     this.isDarkMode = true,
+    this.isPaused = false,
+    this.pausedIndex = 0,
   });
 
   AppState copyWith({
@@ -226,6 +230,8 @@ class AppState {
     List<Alert>? alerts,
     int? unreadAlertCount,
     bool? isDarkMode,
+    bool? isPaused,
+    int? pausedIndex,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -237,6 +243,8 @@ class AppState {
         alerts: alerts ?? this.alerts,
         unreadAlertCount: unreadAlertCount ?? this.unreadAlertCount,
         isDarkMode: isDarkMode ?? this.isDarkMode,
+        isPaused: isPaused ?? this.isPaused,
+        pausedIndex: pausedIndex ?? this.pausedIndex,
       );
 }
 
@@ -335,14 +343,19 @@ class AppStateNotifier extends StateNotifier<AppState> {
           totalAlerts.removeRange(0, totalAlerts.length - 200);
         }
 
+        final pausedIndex = state.isPaused
+            ? state.pausedIndex
+            : history.length - 1;
+
         state = state.copyWith(
           latestUpdate: u,
           msgCount: count,
           log: [...state.log, line],
-          vitalsHistory: history,
+          vitalsHistory: state.isPaused ? null : history,
           alerts: totalAlerts,
           unreadAlertCount:
               state.unreadAlertCount + newAlerts.length,
+          pausedIndex: pausedIndex,
         );
 
         for (final alert in newAlerts) {
@@ -438,6 +451,21 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void toggleTheme() {
     state = state.copyWith(isDarkMode: !state.isDarkMode);
+  }
+
+  void togglePause() {
+    final paused = !state.isPaused;
+    state = state.copyWith(
+      isPaused: paused,
+      pausedIndex:
+          paused ? state.vitalsHistory.length - 1 : state.pausedIndex,
+    );
+  }
+
+  void seekToFrame(int index) {
+    if (index >= 0 && index < state.vitalsHistory.length) {
+      state = state.copyWith(pausedIndex: index);
+    }
   }
 
   @override
