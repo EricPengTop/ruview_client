@@ -8,8 +8,9 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: RuViewApp()));
     expect(find.text('概览'), findsAtLeast(1));
     expect(find.text('未连接'), findsWidgets);
-    expect(find.text('生命体征'), findsOneWidget);
+    expect(find.text('体征'), findsOneWidget);
     expect(find.text('姿态'), findsOneWidget);
     expect(find.text('区域'), findsOneWidget);
+    expect(find.text('安全'), findsOneWidget);
   });
 }

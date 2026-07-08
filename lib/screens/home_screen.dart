@@ -7,7 +7,8 @@ import 'vitals_screen.dart';
 import 'pose_screen.dart';
 import 'zones_screen.dart';
 import 'alerts_screen.dart';
-import 'debug_screen.dart';
+import 'security_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -25,9 +26,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     PoseScreen(),
     ZonesScreen(),
     AlertsScreen(),
+    SecurityScreen(),
   ];
 
-  final _titles = const ['概览', '生命体征', '人体姿态', '区域监控', '告警中心'];
+  final _titles = const [
+    '概览',
+    '生命体征',
+    '人体姿态',
+    '区域监控',
+    '告警中心',
+    '安全监控',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +50,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: Text(_titles[_currentIndex]),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bug_report, size: 20),
-            tooltip: '调试',
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            tooltip: '设置',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const DebugScreen()),
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
           _buildConnectionChip(notifier, isConnected),
@@ -68,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const NavigationDestination(
             icon: Icon(Icons.favorite_outline),
             selectedIcon: Icon(Icons.favorite),
-            label: '生命体征',
+            label: '体征',
           ),
           const NavigationDestination(
             icon: Icon(Icons.accessibility_new_outlined),
@@ -92,6 +101,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: const Icon(Icons.notifications),
             ),
             label: '告警',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.security_outlined),
+            selectedIcon: Icon(Icons.security),
+            label: '安全',
           ),
         ],
       ),
