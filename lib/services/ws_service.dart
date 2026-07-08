@@ -177,12 +177,29 @@ class WebSocketService {
   }
 }
 
+class VitalsRecord {
+  final DateTime time;
+  final double heartRate;
+  final double breathingRate;
+  final double hrConfidence;
+  final double brConfidence;
+
+  const VitalsRecord({
+    required this.time,
+    required this.heartRate,
+    required this.breathingRate,
+    required this.hrConfidence,
+    required this.brConfidence,
+  });
+}
+
 class AppState {
   final WsConnectionState connectionState;
   final SensingUpdate? latestUpdate;
   final List<String> log;
   final String? lastError;
   final int msgCount;
+  final List<VitalsRecord> vitalsHistory;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -190,6 +207,7 @@ class AppState {
     this.log = const [],
     this.lastError,
     this.msgCount = 0,
+    this.vitalsHistory = const [],
   });
 
   AppState copyWith({
@@ -198,6 +216,7 @@ class AppState {
     List<String>? log,
     String? lastError,
     int? msgCount,
+    List<VitalsRecord>? vitalsHistory,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -205,6 +224,7 @@ class AppState {
         log: log ?? this.log,
         lastError: lastError,
         msgCount: msgCount ?? this.msgCount,
+        vitalsHistory: vitalsHistory ?? this.vitalsHistory,
       );
 }
 
@@ -282,10 +302,25 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
         debugPrint('[RuView] $line');
 
+        final history = [
+          ...state.vitalsHistory,
+          VitalsRecord(
+            time: now,
+            heartRate: hr,
+            breathingRate: br,
+            hrConfidence: hrConf,
+            brConfidence: brConf,
+          ),
+        ];
+        if (history.length > 60) {
+          history.removeAt(0);
+        }
+
         state = state.copyWith(
           latestUpdate: u,
           msgCount: count,
           log: [...state.log, line],
+          vitalsHistory: history,
         );
       }
     });
