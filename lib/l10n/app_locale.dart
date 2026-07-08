@@ -430,7 +430,7 @@ class AppStrings {
     var s = getString(key);
     if (args != null) {
       for (final e in args.entries) {
-        s = s.replaceAll('{$e.key}', e.value);
+        s = s.replaceAll('{${e.key}}', e.value);
       }
     }
     return s;
