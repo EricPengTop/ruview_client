@@ -14,16 +14,14 @@ class VitalSigns {
   });
 
   factory VitalSigns.fromJson(Map<String, dynamic> json) => VitalSigns(
-        breathingRateBpm:
-            (json['breathing_rate_bpm'] as num?)?.toDouble() ?? 0.0,
-        heartRateBpm: (json['heart_rate_bpm'] as num?)?.toDouble() ?? 0.0,
-        breathingConfidence:
-            (json['breathing_confidence'] as num?)?.toDouble() ?? 0.0,
-        heartbeatConfidence:
-            (json['heartbeat_confidence'] as num?)?.toDouble() ?? 0.0,
-        signalQuality:
-            (json['signal_quality'] as num?)?.toDouble() ?? 0.0,
-      );
+    breathingRateBpm: (json['breathing_rate_bpm'] as num?)?.toDouble() ?? 0.0,
+    heartRateBpm: (json['heart_rate_bpm'] as num?)?.toDouble() ?? 0.0,
+    breathingConfidence:
+        (json['breathing_confidence'] as num?)?.toDouble() ?? 0.0,
+    heartbeatConfidence:
+        (json['heartbeat_confidence'] as num?)?.toDouble() ?? 0.0,
+    signalQuality: (json['signal_quality'] as num?)?.toDouble() ?? 0.0,
+  );
 }
 
 class Classification {
@@ -37,12 +35,11 @@ class Classification {
     required this.confidence,
   });
 
-  factory Classification.fromJson(Map<String, dynamic> json) =>
-      Classification(
-        presence: json['presence'] as bool? ?? false,
-        motionLevel: json['motion_level'] as String? ?? 'unknown',
-        confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
-      );
+  factory Classification.fromJson(Map<String, dynamic> json) => Classification(
+    presence: json['presence'] as bool? ?? false,
+    motionLevel: json['motion_level'] as String? ?? 'unknown',
+    confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
+  );
 }
 
 class Features {
@@ -65,16 +62,13 @@ class Features {
   });
 
   factory Features.fromJson(Map<String, dynamic> json) => Features(
-        meanRssi: (json['mean_rssi'] as num?)?.toDouble() ?? 0.0,
-        variance: (json['variance'] as num?)?.toDouble() ?? 0.0,
-        motionBandPower:
-            (json['motion_band_power'] as num?)?.toDouble() ?? 0.0,
-        breathingBandPower:
-            (json['breathing_band_power'] as num?)?.toDouble() ?? 0.0,
-        dominantFreqHz:
-            (json['dominant_freq_hz'] as num?)?.toDouble() ?? 0.0,
-        changePoints: json['change_points'] as int? ?? 0,
-        spectralPower:
-            (json['spectral_power'] as num?)?.toDouble() ?? 0.0,
-      );
+    meanRssi: (json['mean_rssi'] as num?)?.toDouble() ?? 0.0,
+    variance: (json['variance'] as num?)?.toDouble() ?? 0.0,
+    motionBandPower: (json['motion_band_power'] as num?)?.toDouble() ?? 0.0,
+    breathingBandPower:
+        (json['breathing_band_power'] as num?)?.toDouble() ?? 0.0,
+    dominantFreqHz: (json['dominant_freq_hz'] as num?)?.toDouble() ?? 0.0,
+    changePoints: json['change_points'] as int? ?? 0,
+    spectralPower: (json['spectral_power'] as num?)?.toDouble() ?? 0.0,
+  );
 }

@@ -17,7 +17,10 @@ class MqttService {
   });
 
   Future<void> connect() async {
-    _client = MqttServerClient(host, 'ruview_client_${DateTime.now().millisecondsSinceEpoch}');
+    _client = MqttServerClient(
+      host,
+      'ruview_client_${DateTime.now().millisecondsSinceEpoch}',
+    );
     _client!.port = port;
     _client!.keepAlivePeriod = 30;
 
@@ -39,7 +42,8 @@ class MqttService {
         String payloadStr;
         if (msg.payload is MqttPublishMessage) {
           payloadStr = MqttPublishPayload.bytesToStringAsString(
-              (msg.payload as MqttPublishMessage).payload.message);
+            (msg.payload as MqttPublishMessage).payload.message,
+          );
         } else {
           continue;
         }

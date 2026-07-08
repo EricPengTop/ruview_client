@@ -47,8 +47,8 @@ class AlertsScreen extends ConsumerWidget {
               return Card(
                 child: ListTile(
                   leading: CircleAvatar(radius: 16, backgroundColor: _alertColor(alert.type).withValues(alpha: 0.15), child: Icon(_alertIcon(alert.type), size: 16, color: _alertColor(alert.type))),
-                  title: Text(alert.type.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: Text(alert.type.description, style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                  title: Text(s.getString(alert.type.labelKey), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: Text(s.getString(alert.type.descKey), style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
                   trailing: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text('${alert.time.hour.toString().padLeft(2, '0')}:${alert.time.minute.toString().padLeft(2, '0')}', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                     if (alert.details.isNotEmpty) Text(alert.details, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),

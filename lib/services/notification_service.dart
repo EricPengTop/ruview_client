@@ -28,11 +28,6 @@ class NotificationService {
         priority: Priority.high,
       ),
     );
-    await _plugin.show(
-      0,
-      title,
-      body,
-      platformDetails,
-    );
+    await _plugin.show(0, title, body, platformDetails);
   }
 }

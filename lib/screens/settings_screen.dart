@@ -270,8 +270,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               : Colors.orange.withValues(alpha: 0.2);
           return ListTile(
             leading: CircleAvatar(radius: 14, backgroundColor: bg, child: Icon(_alertIcon(a.type), size: 14)),
-            title: Text(a.type.label, style: const TextStyle(fontSize: 14)),
-            subtitle: Text(a.type.description, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            title: Text(s.getString(a.type.labelKey), style: const TextStyle(fontSize: 14)),
+            subtitle: Text(s.getString(a.type.descKey), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
             trailing: Text('${a.time.hour.toString().padLeft(2, '0')}:${a.time.minute.toString().padLeft(2, '0')}',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
           );

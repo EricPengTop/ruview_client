@@ -15,6 +15,7 @@ sealed class SensingMessage {
 
 class SensingUpdateMessage extends SensingMessage {
   final SensingUpdate update;
+
   const SensingUpdateMessage(this.update);
 }
 
@@ -54,11 +55,14 @@ class WebSocketService {
   final _errorController = StreamController<String>.broadcast();
 
   Stream<SensingMessage> get messages => _messageController.stream;
+
   Stream<WsConnectionState> get connectionState =>
       _connectionStateController.stream;
+
   Stream<String> get errors => _errorController.stream;
 
   WsConnectionState _state = WsConnectionState.disconnected;
+
   WsConnectionState get state => _state;
 
   WebSocketService({required this.host, this.port = 3001});
@@ -75,9 +79,12 @@ class WebSocketService {
 
     try {
       _channel = WebSocketChannel.connect(_wsUri)
-        ..ready.timeout(_connectionTimeout, onTimeout: () {
-          throw TimeoutException('Connection timeout');
-        });
+        ..ready.timeout(
+          _connectionTimeout,
+          onTimeout: () {
+            throw TimeoutException('Connection timeout');
+          },
+        );
 
       await _channel!.ready;
 
@@ -104,8 +111,9 @@ class WebSocketService {
       final type = json['type'] as String?;
 
       if (type == 'sensing_update') {
-        _messageController
-            .add(SensingUpdateMessage(SensingUpdate.fromJson(json)));
+        _messageController.add(
+          SensingUpdateMessage(SensingUpdate.fromJson(json)),
+        );
       }
       _resetHeartbeat();
     } catch (e) {
@@ -133,8 +141,7 @@ class WebSocketService {
 
     _reconnectAttempts++;
     final delay = Duration(
-      milliseconds:
-          (1000 * (1 << (_reconnectAttempts - 1))).clamp(1000, 30000),
+      milliseconds: (1000 * (1 << (_reconnectAttempts - 1))).clamp(1000, 30000),
     );
 
     _reconnectTimer?.cancel();
@@ -272,32 +279,31 @@ class AppState {
     double? brMin,
     List<CustomZone>? customZones,
     String? locale,
-  }) =>
-      AppState(
-        connectionState: connectionState ?? this.connectionState,
-        latestUpdate: latestUpdate ?? this.latestUpdate,
-        log: log ?? this.log,
-        lastError: lastError,
-        msgCount: msgCount ?? this.msgCount,
-        vitalsHistory: vitalsHistory ?? this.vitalsHistory,
-        alerts: alerts ?? this.alerts,
-        unreadAlertCount: unreadAlertCount ?? this.unreadAlertCount,
-        isDarkMode: isDarkMode ?? this.isDarkMode,
-        isPaused: isPaused ?? this.isPaused,
-        pausedIndex: pausedIndex ?? this.pausedIndex,
-        isPrivacyMode: isPrivacyMode ?? this.isPrivacyMode,
-        mqttEnabled: mqttEnabled ?? this.mqttEnabled,
-        mqttHost: mqttHost ?? this.mqttHost,
-        mqttPort: mqttPort ?? this.mqttPort,
-        mqttConnected: mqttConnected ?? this.mqttConnected,
-        semanticStates: semanticStates ?? this.semanticStates,
-        hrMax: hrMax ?? this.hrMax,
-        hrMin: hrMin ?? this.hrMin,
-        brMax: brMax ?? this.brMax,
-        brMin: brMin ?? this.brMin,
-        customZones: customZones ?? this.customZones,
-        locale: locale ?? this.locale,
-      );
+  }) => AppState(
+    connectionState: connectionState ?? this.connectionState,
+    latestUpdate: latestUpdate ?? this.latestUpdate,
+    log: log ?? this.log,
+    lastError: lastError,
+    msgCount: msgCount ?? this.msgCount,
+    vitalsHistory: vitalsHistory ?? this.vitalsHistory,
+    alerts: alerts ?? this.alerts,
+    unreadAlertCount: unreadAlertCount ?? this.unreadAlertCount,
+    isDarkMode: isDarkMode ?? this.isDarkMode,
+    isPaused: isPaused ?? this.isPaused,
+    pausedIndex: pausedIndex ?? this.pausedIndex,
+    isPrivacyMode: isPrivacyMode ?? this.isPrivacyMode,
+    mqttEnabled: mqttEnabled ?? this.mqttEnabled,
+    mqttHost: mqttHost ?? this.mqttHost,
+    mqttPort: mqttPort ?? this.mqttPort,
+    mqttConnected: mqttConnected ?? this.mqttConnected,
+    semanticStates: semanticStates ?? this.semanticStates,
+    hrMax: hrMax ?? this.hrMax,
+    hrMin: hrMin ?? this.hrMin,
+    brMax: brMax ?? this.brMax,
+    brMin: brMin ?? this.brMin,
+    customZones: customZones ?? this.customZones,
+    locale: locale ?? this.locale,
+  );
 }
 
 class AppStateNotifier extends StateNotifier<AppState> {
@@ -330,10 +336,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
     _errSub = _ws!.errors.listen((err) {
       final line = '${DateTime.now().toIso8601String()} 错误: $err';
       debugPrint('[RuView] $line');
-      state = state.copyWith(
-        lastError: err,
-        log: [...state.log, line],
-      );
+      state = state.copyWith(lastError: err, log: [...state.log, line]);
     });
 
     _msgSub = _ws!.messages.listen((msg) {
@@ -362,14 +365,17 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
         final personDetails = u.persons.isNotEmpty
             ? u.persons
-                .map((p) => '目标${p.trackId}(置信${(p.confidence * 100).toStringAsFixed(0)}%)')
-                .join(' ')
+                  .map(
+                    (p) =>
+                        '目标${p.trackId}(置信${(p.confidence * 100).toStringAsFixed(0)}%)',
+                  )
+                  .join(' ')
             : '-';
 
         final vitalsPart = state.isPrivacyMode
             ? 'HR/BR=已隐藏'
             : '心率=${hr.toStringAsFixed(1)}bpm(可信度${(hrConf * 100).toStringAsFixed(0)}%) '
-                '呼吸率=${br.toStringAsFixed(1)}bpm(可信度${(brConf * 100).toStringAsFixed(0)}%)';
+                  '呼吸率=${br.toStringAsFixed(1)}bpm(可信度${(brConf * 100).toStringAsFixed(0)}%)';
 
         final line =
             '#$count | $ts | t=$tick | $presence $motion (分类置信${(classifierConf * 100).toStringAsFixed(0)}%) | '
@@ -411,13 +417,14 @@ class AppStateNotifier extends StateNotifier<AppState> {
           log: [...state.log, line],
           vitalsHistory: state.isPaused ? null : history,
           alerts: totalAlerts,
-          unreadAlertCount:
-              state.unreadAlertCount + newAlerts.length,
+          unreadAlertCount: state.unreadAlertCount + newAlerts.length,
           pausedIndex: pausedIndex,
         );
 
         for (final alert in newAlerts) {
-          debugPrint('[RuView] 🔔 ${alert.type.label}: ${alert.type.description}');
+          debugPrint(
+            '[RuView] 🔔 ${alert.type.label}: ${alert.type.description}',
+          );
           if (alert.type == AlertType.presenceAppeared ||
               alert.type == AlertType.presenceDisappeared ||
               alert.type == AlertType.signalLow ||
@@ -454,7 +461,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
   }
 
   List<Alert> _detectAlerts(
-      SensingUpdate? prev, SensingUpdate curr, DateTime now) {
+    SensingUpdate? prev,
+    SensingUpdate curr,
+    DateTime now,
+  ) {
     final alerts = <Alert>[];
 
     if (prev == null) return alerts;
@@ -462,16 +472,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
     // Presence change
     if (prev.classification.presence != curr.classification.presence) {
       if (curr.classification.presence) {
-        alerts.add(Alert(
-          type: AlertType.presenceAppeared,
-          time: now,
-          details: '检测到${curr.estimatedPersons}人',
-        ));
+        alerts.add(
+          Alert(
+            type: AlertType.presenceAppeared,
+            time: now,
+            details: '检测到${curr.estimatedPersons}人',
+          ),
+        );
       } else {
-        alerts.add(Alert(
-          type: AlertType.presenceDisappeared,
-          time: now,
-        ));
+        alerts.add(Alert(type: AlertType.presenceDisappeared, time: now));
       }
     }
 
@@ -486,21 +495,26 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
     // Person count change
     if (prev.estimatedPersons != curr.estimatedPersons) {
-      alerts.add(Alert(
-        type: AlertType.personCountChanged,
-        time: now,
-        details: '${prev.estimatedPersons}人 → ${curr.estimatedPersons}人',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.personCountChanged,
+          time: now,
+          details: '${prev.estimatedPersons}人 → ${curr.estimatedPersons}人',
+        ),
+      );
     }
 
     // Low signal quality (below 30%)
     if (curr.vitalSigns.signalQuality < 0.3 &&
         prev.vitalSigns.signalQuality >= 0.3) {
-      alerts.add(Alert(
-        type: AlertType.signalLow,
-        time: now,
-        details: '当前${(curr.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.signalLow,
+          time: now,
+          details:
+              '当前${(curr.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
+        ),
+      );
     }
 
     // Custom threshold alerts
@@ -509,32 +523,44 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final r = state;
 
     if (hr > r.hrMax && prev.vitalSigns.heartRateBpm <= r.hrMax) {
-      alerts.add(Alert(
-        type: AlertType.hrHigh,
-        time: now,
-        details: '${hr.toStringAsFixed(1)} bpm > ${r.hrMax.toStringAsFixed(0)} bpm',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.hrHigh,
+          time: now,
+          details:
+              '${hr.toStringAsFixed(1)} bpm > ${r.hrMax.toStringAsFixed(0)} bpm',
+        ),
+      );
     }
     if (hr < r.hrMin && prev.vitalSigns.heartRateBpm >= r.hrMin) {
-      alerts.add(Alert(
-        type: AlertType.hrLow,
-        time: now,
-        details: '${hr.toStringAsFixed(1)} bpm < ${r.hrMin.toStringAsFixed(0)} bpm',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.hrLow,
+          time: now,
+          details:
+              '${hr.toStringAsFixed(1)} bpm < ${r.hrMin.toStringAsFixed(0)} bpm',
+        ),
+      );
     }
     if (br > r.brMax && prev.vitalSigns.breathingRateBpm <= r.brMax) {
-      alerts.add(Alert(
-        type: AlertType.brHigh,
-        time: now,
-        details: '${br.toStringAsFixed(1)} bpm > ${r.brMax.toStringAsFixed(0)} bpm',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.brHigh,
+          time: now,
+          details:
+              '${br.toStringAsFixed(1)} bpm > ${r.brMax.toStringAsFixed(0)} bpm',
+        ),
+      );
     }
     if (br < r.brMin && prev.vitalSigns.breathingRateBpm >= r.brMin) {
-      alerts.add(Alert(
-        type: AlertType.brLow,
-        time: now,
-        details: '${br.toStringAsFixed(1)} bpm < ${r.brMin.toStringAsFixed(0)} bpm',
-      ));
+      alerts.add(
+        Alert(
+          type: AlertType.brLow,
+          time: now,
+          details:
+              '${br.toStringAsFixed(1)} bpm < ${r.brMin.toStringAsFixed(0)} bpm',
+        ),
+      );
     }
 
     return alerts;
@@ -570,7 +596,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
           onMessage: (topic, payload) {
             final key = topic.split('/').last;
             state = state.copyWith(
-              semanticStates: {...state.semanticStates, key: payload.toString()},
+              semanticStates: {
+                ...state.semanticStates,
+                key: payload.toString(),
+              },
             );
           },
         );
@@ -593,8 +622,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
   }
 
   void setHrMax(double v) => state = state.copyWith(hrMax: v);
+
   void setHrMin(double v) => state = state.copyWith(hrMin: v);
+
   void setBrMax(double v) => state = state.copyWith(brMax: v);
+
   void setBrMin(double v) => state = state.copyWith(brMin: v);
 
   void addZone(CustomZone zone) {
@@ -603,7 +635,8 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void removeZone(String id) {
     state = state.copyWith(
-        customZones: state.customZones.where((z) => z.id != id).toList());
+      customZones: state.customZones.where((z) => z.id != id).toList(),
+    );
   }
 
   void toggleLocale() {
@@ -614,8 +647,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final paused = !state.isPaused;
     state = state.copyWith(
       isPaused: paused,
-      pausedIndex:
-          paused ? state.vitalsHistory.length - 1 : state.pausedIndex,
+      pausedIndex: paused ? state.vitalsHistory.length - 1 : state.pausedIndex,
     );
   }
 
@@ -637,5 +669,5 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
 final appStateProvider =
     StateNotifierProvider.autoDispose<AppStateNotifier, AppState>(
-  (ref) => AppStateNotifier(),
-);
+      (ref) => AppStateNotifier(),
+    );

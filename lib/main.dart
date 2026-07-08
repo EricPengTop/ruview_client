@@ -24,8 +24,16 @@ class RuViewApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: s.getString('app_title'),
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.dark),
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.light),
+      darkTheme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      ),
+      theme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        useMaterial3: true,
+        brightness: Brightness.light,
+      ),
       home: const HomeScreen(),
     );
   }

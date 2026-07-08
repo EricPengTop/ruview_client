@@ -49,12 +49,15 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             if (state.msgCount > 0) ...[
               const SizedBox(width: 8),
               Chip(
-                label: Text('#${state.msgCount}',
-                    style: const TextStyle(fontSize: 11)),
+                label: Text(
+                  '#${state.msgCount}',
+                  style: const TextStyle(fontSize: 11),
+                ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
-                backgroundColor:
-                    Theme.of(context).colorScheme.secondaryContainer,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.secondaryContainer,
               ),
             ],
           ],
@@ -92,18 +95,17 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
           size: 12,
         ),
         const SizedBox(width: 6),
-        Text(
-          isConnected ? '已连接' : '未连接',
-          style: const TextStyle(fontSize: 14),
-        ),
+        Text(isConnected ? '已连接' : '未连接', style: const TextStyle(fontSize: 14)),
         const SizedBox(width: 8),
         FilledButton.tonalIcon(
           onPressed: () {
             if (isConnected) {
               notifier.disconnect();
             } else {
-              notifier.connect(_hostController.text,
-                  int.tryParse(_portController.text) ?? 3001);
+              notifier.connect(
+                _hostController.text,
+                int.tryParse(_portController.text) ?? 3001,
+              );
             }
           },
           icon: Icon(isConnected ? Icons.stop : Icons.play_arrow, size: 18),
@@ -161,26 +163,31 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _vitalChip(
-              '人体存在',
-              update.classification.presence ? '是' : '否',
-              update.classification.presence ? Colors.green : Colors.red),
+            '人体存在',
+            update.classification.presence ? '是' : '否',
+            update.classification.presence ? Colors.green : Colors.red,
+          ),
           _vitalChip(
-              '运动状态',
-              _motionLabel(update.classification.motionLevel),
-              Colors.orange),
+            '运动状态',
+            _motionLabel(update.classification.motionLevel),
+            Colors.orange,
+          ),
           _vitalChip(
-              '心率',
-              '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm',
-              null),
+            '心率',
+            '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm',
+            null,
+          ),
           _vitalChip(
-              '呼吸率',
-              '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm',
-              null),
+            '呼吸率',
+            '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm',
+            null,
+          ),
           _vitalChip('人数', '${update.estimatedPersons}', null),
           _vitalChip(
-              '信号质量',
-              '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
-              null),
+            '信号质量',
+            '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
+            null,
+          ),
         ],
       ),
     );
@@ -203,23 +210,26 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+        ),
         const SizedBox(height: 2),
-        Text(value,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildLogView(List<String> log) {
     if (log.isEmpty) {
-      return const Center(
-        child: Text('暂无消息，点击连接开始'),
-      );
+      return const Center(child: Text('暂无消息，点击连接开始'));
     }
 
     return ListView.builder(

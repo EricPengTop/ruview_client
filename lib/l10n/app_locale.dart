@@ -6,6 +6,7 @@ enum AppLocale { zh, en }
 
 class AppStrings {
   final AppLocale locale;
+
   AppStrings(this.locale);
 
   static const _zh = {
@@ -58,6 +59,26 @@ class AppStrings {
     'alert_hr_low': '心率下限',
     'alert_br_high': '呼吸上限',
     'alert_br_low': '呼吸下限',
+    'alert_presence_appeared': '人员进入',
+    'alert_presence_disappeared': '人员离开',
+    'alert_motion_started': '运动开始',
+    'alert_motion_stopped': '人员静止',
+    'alert_person_count_changed': '人数变化',
+    'alert_signal_low': '信号质量低',
+    'alert_hr_high_label': '心率过高',
+    'alert_hr_low_label': '心率过低',
+    'alert_br_high_label': '呼吸过快',
+    'alert_br_low_label': '呼吸过慢',
+    'alert_presence_appeared_desc': '检测到人员进入监控区域',
+    'alert_presence_disappeared_desc': '人员已离开监控区域',
+    'alert_motion_started_desc': '检测到人员开始运动',
+    'alert_motion_stopped_desc': '人员已停止运动，处于静止状态',
+    'alert_person_count_changed_desc': '区域内人数发生变化',
+    'alert_signal_low_desc': '信号质量较低，可能影响检测精度',
+    'alert_hr_high_desc': '心率超过设定上限值',
+    'alert_hr_low_desc': '心率低于设定下限值',
+    'alert_br_high_desc': '呼吸率超过设定上限值',
+    'alert_br_low_desc': '呼吸率低于设定下限值',
 
     'privacy': '隐私',
     'privacy_mode': '隐私模式',
@@ -245,6 +266,26 @@ class AppStrings {
     'alert_hr_low': 'HR Min',
     'alert_br_high': 'BR Max',
     'alert_br_low': 'BR Min',
+    'alert_presence_appeared': 'Person Entered',
+    'alert_presence_disappeared': 'Person Left',
+    'alert_motion_started': 'Motion Started',
+    'alert_motion_stopped': 'Still',
+    'alert_person_count_changed': 'Count Changed',
+    'alert_signal_low': 'Low Signal',
+    'alert_hr_high_label': 'HR High',
+    'alert_hr_low_label': 'HR Low',
+    'alert_br_high_label': 'BR High',
+    'alert_br_low_label': 'BR Low',
+    'alert_presence_appeared_desc': 'Person detected in monitoring area',
+    'alert_presence_disappeared_desc': 'Person left the monitoring area',
+    'alert_motion_started_desc': 'Person started moving',
+    'alert_motion_stopped_desc': 'Person stopped moving',
+    'alert_person_count_changed_desc': 'Number of people changed',
+    'alert_signal_low_desc': 'Low signal quality may affect accuracy',
+    'alert_hr_high_desc': 'Heart rate exceeds upper limit',
+    'alert_hr_low_desc': 'Heart rate below lower limit',
+    'alert_br_high_desc': 'Breathing rate exceeds upper limit',
+    'alert_br_low_desc': 'Breathing rate below lower limit',
 
     'privacy': 'Privacy',
     'privacy_mode': 'Privacy Mode',

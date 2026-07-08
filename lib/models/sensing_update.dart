@@ -30,11 +30,14 @@ class SensingUpdate {
       source: json['source'] as String? ?? '',
       estimatedPersons: json['estimated_persons'] as int? ?? 0,
       classification: Classification.fromJson(
-          json['classification'] as Map<String, dynamic>? ?? {}),
+        json['classification'] as Map<String, dynamic>? ?? {},
+      ),
       vitalSigns: VitalSigns.fromJson(
-          json['vital_signs'] as Map<String, dynamic>? ?? {}),
+        json['vital_signs'] as Map<String, dynamic>? ?? {},
+      ),
       features: Features.fromJson(
-          json['features'] as Map<String, dynamic>? ?? {}),
+        json['features'] as Map<String, dynamic>? ?? {},
+      ),
       persons: rawPersons
           .map((p) => PoseDetection.fromJson(p as Map<String, dynamic>))
           .toList(),

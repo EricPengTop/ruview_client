@@ -12,6 +12,57 @@ enum AlertType {
 }
 
 extension AlertTypeLabel on AlertType {
+  String get labelKey {
+    switch (this) {
+      case AlertType.presenceAppeared:
+        return 'alert_presence_appeared';
+      case AlertType.presenceDisappeared:
+        return 'alert_presence_disappeared';
+      case AlertType.motionStarted:
+        return 'alert_motion_started';
+      case AlertType.motionStopped:
+        return 'alert_motion_stopped';
+      case AlertType.personCountChanged:
+        return 'alert_person_count_changed';
+      case AlertType.signalLow:
+        return 'alert_signal_low';
+      case AlertType.hrHigh:
+        return 'alert_hr_high_label';
+      case AlertType.hrLow:
+        return 'alert_hr_low_label';
+      case AlertType.brHigh:
+        return 'alert_br_high_label';
+      case AlertType.brLow:
+        return 'alert_br_low_label';
+    }
+  }
+
+  String get descKey {
+    switch (this) {
+      case AlertType.presenceAppeared:
+        return 'alert_presence_appeared_desc';
+      case AlertType.presenceDisappeared:
+        return 'alert_presence_disappeared_desc';
+      case AlertType.motionStarted:
+        return 'alert_motion_started_desc';
+      case AlertType.motionStopped:
+        return 'alert_motion_stopped_desc';
+      case AlertType.personCountChanged:
+        return 'alert_person_count_changed_desc';
+      case AlertType.signalLow:
+        return 'alert_signal_low_desc';
+      case AlertType.hrHigh:
+        return 'alert_hr_high_desc';
+      case AlertType.hrLow:
+        return 'alert_hr_low_desc';
+      case AlertType.brHigh:
+        return 'alert_br_high_desc';
+      case AlertType.brLow:
+        return 'alert_br_low_desc';
+    }
+  }
+
+  /// Default Chinese label for service-layer use (debugPrint, notifications)
   String get label {
     switch (this) {
       case AlertType.presenceAppeared:
@@ -37,6 +88,7 @@ extension AlertTypeLabel on AlertType {
     }
   }
 
+  /// Default Chinese description for service-layer use
   String get description {
     switch (this) {
       case AlertType.presenceAppeared:
@@ -68,9 +120,5 @@ class Alert {
   final DateTime time;
   final String details;
 
-  const Alert({
-    required this.type,
-    required this.time,
-    this.details = '',
-  });
+  const Alert({required this.type, required this.time, this.details = ''});
 }

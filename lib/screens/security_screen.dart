@@ -89,7 +89,7 @@ class SecurityScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(children: [
                           Container(width: 6, height: 6, decoration: BoxDecoration(color: _eventColor(a.type), shape: BoxShape.circle)), const SizedBox(width: 8),
-                          Expanded(child: Text('${a.type.label}${a.details.isNotEmpty ? " (${a.details})" : ""}', style: const TextStyle(fontSize: 12))),
+                          Expanded(child: Text('${s.getString(a.type.labelKey)}${a.details.isNotEmpty ? " (${a.details})" : ""}', style: const TextStyle(fontSize: 12))),
                           Text('${a.time.hour.toString().padLeft(2, '0')}:${a.time.minute.toString().padLeft(2, '0')}', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                         ]),
                       );

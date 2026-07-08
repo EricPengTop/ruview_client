@@ -113,7 +113,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
+  Widget _buildConnectionChip(
+    AppStateNotifier notifier,
+    bool isConnected,
+    AppStrings s,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -140,7 +144,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             }
           },
           icon: Icon(isConnected ? Icons.stop : Icons.play_arrow, size: 18),
-          label: Text(isConnected ? s.getString('disconnect') : s.getString('connect')),
+          label: Text(
+            isConnected ? s.getString('disconnect') : s.getString('connect'),
+          ),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             minimumSize: Size.zero,
@@ -155,6 +161,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _ConnectDialog extends StatefulWidget {
   final AppStateNotifier notifier;
   final AppStrings s;
+
   const _ConnectDialog({required this.notifier, required this.s});
 
   @override
