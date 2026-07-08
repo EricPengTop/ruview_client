@@ -221,6 +221,9 @@ class AppStrings {
     'realtime': '实时',
     'rssi': 'RSSI',
     'unknown': '未知',
+    'debug_title': 'RuView 调试',
+    'debug_clear_log': '清空日志',
+    'debug_no_messages': '暂无消息，点击连接开始',
   };
 
   static const _en = {
@@ -418,6 +421,9 @@ class AppStrings {
     'no': 'No',
     'rssi': 'RSSI',
     'unknown': 'Unknown',
+    'debug_title': 'RuView Debug',
+    'debug_clear_log': 'Clear Log',
+    'debug_no_messages': 'No messages. Tap Connect.',
   };
 
   String getString(String key) {

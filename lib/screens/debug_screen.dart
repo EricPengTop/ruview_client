@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
@@ -28,6 +29,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
+    final s = ref.watch(appStringsProvider);
     final isConnected = state.connectionState.isConnected;
 
     if (state.log.isNotEmpty && _scrollController.hasClients) {
@@ -45,19 +47,14 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('RuView 调试'),
+            Text(s.getString('debug_title')),
             if (state.msgCount > 0) ...[
               const SizedBox(width: 8),
               Chip(
-                label: Text(
-                  '#${state.msgCount}',
-                  style: const TextStyle(fontSize: 11),
-                ),
+                label: Text('#${state.msgCount}', style: const TextStyle(fontSize: 11)),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.secondaryContainer,
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
               ),
             ],
           ],
@@ -67,60 +64,48 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
               onPressed: () => notifier.clearLog(),
-              tooltip: '清空日志',
+              tooltip: s.getString('debug_clear_log'),
             ),
-          _buildConnectionChip(notifier, isConnected),
+          _buildConnectionChip(notifier, isConnected, s),
           const SizedBox(width: 12),
         ],
       ),
       body: Column(
         children: [
-          _buildSettingsBar(isConnected),
+          _buildSettingsBar(isConnected, s),
           const Divider(height: 1),
-          if (state.latestUpdate != null)
-            _buildVitalsStrip(state.latestUpdate!),
-          Expanded(child: _buildLogView(state.log)),
+          if (state.latestUpdate != null) _buildVitalsStrip(state.latestUpdate!, s),
+          Expanded(child: _buildLogView(state.log, s)),
         ],
       ),
     );
   }
 
-  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected) {
+  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          isConnected ? Icons.circle : Icons.circle_outlined,
-          color: isConnected ? Colors.green : Colors.grey,
-          size: 12,
-        ),
+        Icon(isConnected ? Icons.circle : Icons.circle_outlined, color: isConnected ? Colors.green : Colors.grey, size: 12),
         const SizedBox(width: 6),
-        Text(isConnected ? '已连接' : '未连接', style: const TextStyle(fontSize: 14)),
+        Text(isConnected ? s.getString('connected') : s.getString('not_connected'), style: const TextStyle(fontSize: 14)),
         const SizedBox(width: 8),
         FilledButton.tonalIcon(
           onPressed: () {
             if (isConnected) {
               notifier.disconnect();
             } else {
-              notifier.connect(
-                _hostController.text,
-                int.tryParse(_portController.text) ?? 3001,
-              );
+              notifier.connect(_hostController.text, int.tryParse(_portController.text) ?? 3001);
             }
           },
           icon: Icon(isConnected ? Icons.stop : Icons.play_arrow, size: 18),
-          label: Text(isConnected ? '断开连接' : '连接'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+          label: Text(isConnected ? s.getString('disconnect') : s.getString('connect')),
+          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
         ),
       ],
     );
   }
 
-  Widget _buildSettingsBar(bool isConnected) {
+  Widget _buildSettingsBar(bool isConnected, AppStrings s) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -130,11 +115,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             child: TextField(
               controller: _hostController,
               enabled: !isConnected,
-              decoration: const InputDecoration(
-                labelText: '主机地址',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
+              decoration: InputDecoration(labelText: s.getString('srv_host'), border: const OutlineInputBorder(), isDense: true),
             ),
           ),
           const SizedBox(width: 8),
@@ -142,11 +123,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             child: TextField(
               controller: _portController,
               enabled: !isConnected,
-              decoration: const InputDecoration(
-                labelText: '端口',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
+              decoration: InputDecoration(labelText: s.getString('srv_port'), border: const OutlineInputBorder(), isDense: true),
               keyboardType: TextInputType.number,
             ),
           ),
@@ -155,52 +132,32 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     );
   }
 
-  Widget _buildVitalsStrip(SensingUpdate update) {
+  Widget _buildVitalsStrip(SensingUpdate update, AppStrings s) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _vitalChip(
-            '人体存在',
-            update.classification.presence ? '是' : '否',
-            update.classification.presence ? Colors.green : Colors.red,
-          ),
-          _vitalChip(
-            '运动状态',
-            _motionLabel(update.classification.motionLevel),
-            Colors.orange,
-          ),
-          _vitalChip(
-            '心率',
-            '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm',
-            null,
-          ),
-          _vitalChip(
-            '呼吸率',
-            '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm',
-            null,
-          ),
-          _vitalChip('人数', '${update.estimatedPersons}', null),
-          _vitalChip(
-            '信号质量',
-            '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
-            null,
-          ),
+          _vitalChip(s.getString('dash_presence_yes'), update.classification.presence ? s.getString('yes') : s.getString('no'), update.classification.presence ? Colors.green : Colors.red),
+          _vitalChip(s.getString('dash_motion'), _motionLabel(update.classification.motionLevel, s), Colors.orange),
+          _vitalChip(s.getString('vitals_hr'), '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm', null),
+          _vitalChip(s.getString('vitals_br'), '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm', null),
+          _vitalChip(s.getString('dash_persons'), '${update.estimatedPersons}', null),
+          _vitalChip(s.getString('dash_signal'), '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%', null),
         ],
       ),
     );
   }
 
-  String _motionLabel(String level) {
+  String _motionLabel(String level, AppStrings s) {
     switch (level) {
       case 'present_still':
-        return '静止';
+        return s.getString('dash_motion_still');
       case 'present_moving':
-        return '运动中';
+        return s.getString('dash_motion_moving');
       case 'absent':
-        return '无人';
+        return s.getString('not_connected_msg');
       default:
         return level;
     }
@@ -210,26 +167,16 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
       ],
     );
   }
 
-  Widget _buildLogView(List<String> log) {
+  Widget _buildLogView(List<String> log, AppStrings s) {
     if (log.isEmpty) {
-      return const Center(child: Text('暂无消息，点击连接开始'));
+      return Center(child: Text(s.getString('debug_no_messages')));
     }
 
     return ListView.builder(
@@ -251,14 +198,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Text(
-            entry,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              color: textColor,
-            ),
-          ),
+          child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
         );
       },
     );
