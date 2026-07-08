@@ -24,7 +24,6 @@ class ZonesScreen extends ConsumerWidget {
     if (u == null) return Center(child: Text(s.getString('zones_wait')));
 
     final personCount = u.estimatedPersons;
-    final hasPeople = personCount > 0;
     final zones = state.customZones;
 
     return Padding(
@@ -88,46 +87,30 @@ class ZonesScreen extends ConsumerWidget {
                 itemCount: zones.length,
                 itemBuilder: (context, i) {
                   final zone = zones[i];
+                  final zoneOccupied = state.occupiedZoneIds.contains(zone.id);
                   return Card(
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: hasPeople
+                        backgroundColor: zoneOccupied
                             ? Colors.green.withValues(alpha: 0.15)
                             : Colors.grey.withValues(alpha: 0.1),
                         child: Icon(
                           Icons.map,
                           size: 18,
-                          color: hasPeople ? Colors.green : Colors.grey,
+                          color: zoneOccupied ? Colors.green : Colors.grey,
                         ),
                       ),
-                      title: Text(
-                        zone.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      title: Text(zone.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(
-                        s.format(
-                          'zones_vertices',
-                          args: {'count': '${zone.points.length}'},
-                        ),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
+                        s.format('zones_vertices', args: {'count': '${zone.points.length}'}),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (hasPeople)
-                            Text(
-                              '$personCount ${s.getString("dash_persons_unit")}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.green,
-                              ),
-                            ),
+                          if (zoneOccupied)
+                            Text('$personCount ${s.getString("dash_persons_unit")}',
+                                style: const TextStyle(fontSize: 13, color: Colors.green)),
                           IconButton(
                             icon: const Icon(Icons.delete_outline, size: 18),
                             onPressed: () => notifier.removeZone(zone.id),

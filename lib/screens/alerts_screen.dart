@@ -15,8 +15,9 @@ class AlertsScreen extends ConsumerWidget {
     final s = ref.watch(appStringsProvider);
     final isConnected = state.connectionState.isConnected;
 
-    if (!isConnected)
+    if (!isConnected) {
       return Center(child: Text(s.getString('not_connected_msg')));
+    }
 
     final alerts = state.alerts.reversed.toList();
     if (alerts.isEmpty) {

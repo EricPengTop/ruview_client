@@ -25,19 +25,26 @@ class Keypoint {
 class PoseDetection {
   final int trackId;
   final double confidence;
+  final double posX;
+  final double posY;
   final List<Keypoint> keypoints;
 
   const PoseDetection({
     required this.trackId,
     required this.confidence,
     required this.keypoints,
+    this.posX = 0,
+    this.posY = 0,
   });
 
   factory PoseDetection.fromJson(Map<String, dynamic> json) {
     final rawKeypoints = json['keypoints'] as List<dynamic>? ?? [];
+    final rawPos = json['position'] as List<dynamic>? ?? [];
     return PoseDetection(
       trackId: json['id'] as int? ?? 0,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
+      posX: rawPos.isNotEmpty ? (rawPos[0] as num).toDouble() : 0,
+      posY: rawPos.isNotEmpty ? (rawPos[1] as num).toDouble() : 0,
       keypoints: rawKeypoints
           .map((k) => Keypoint.fromJson(k as Map<String, dynamic>))
           .toList(),

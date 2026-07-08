@@ -15,8 +15,9 @@ class SecurityScreen extends ConsumerWidget {
     final s = ref.watch(appStringsProvider);
     final isConnected = state.connectionState.isConnected;
 
-    if (!isConnected)
+    if (!isConnected) {
       return Center(child: Text(s.getString('not_connected_msg')));
+    }
 
     final u = state.latestUpdate;
     if (u == null) return Center(child: Text(s.getString('not_connected_msg')));

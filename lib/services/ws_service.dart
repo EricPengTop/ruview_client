@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -227,6 +228,7 @@ class AppState {
   final double brMax;
   final double brMin;
   final List<CustomZone> customZones;
+  final List<String> occupiedZoneIds;
   final String locale;
 
   const AppState({
@@ -252,6 +254,7 @@ class AppState {
     this.brMax = 25,
     this.brMin = 5,
     this.customZones = const [],
+    this.occupiedZoneIds = const [],
     this.locale = 'zh',
   });
 
@@ -278,6 +281,7 @@ class AppState {
     double? brMax,
     double? brMin,
     List<CustomZone>? customZones,
+    List<String>? occupiedZoneIds,
     String? locale,
   }) => AppState(
     connectionState: connectionState ?? this.connectionState,
@@ -301,8 +305,9 @@ class AppState {
     hrMin: hrMin ?? this.hrMin,
     brMax: brMax ?? this.brMax,
     brMin: brMin ?? this.brMin,
-    customZones: customZones ?? this.customZones,
-    locale: locale ?? this.locale,
+        customZones: customZones ?? this.customZones,
+        occupiedZoneIds: occupiedZoneIds ?? this.occupiedZoneIds,
+        locale: locale ?? this.locale,
   );
 }
 
@@ -431,6 +436,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
               alert.type == AlertType.hrHigh ||
               alert.type == AlertType.brLow) {
             NotificationService.show(alert.type.label, alert.type.description);
+          }
+        }
+
+        // Compute custom zone occupancy
+        if (state.customZones.isNotEmpty && u.persons.isNotEmpty) {
+          final occupiedIds = _computeOccupiedZones(
+              state.customZones, u.persons);
+          if (occupiedIds.isNotEmpty) {
+            state = state.copyWith(occupiedZoneIds: occupiedIds);
           }
         }
       }
@@ -564,6 +578,40 @@ class AppStateNotifier extends StateNotifier<AppState> {
     }
 
     return alerts;
+  }
+
+  List<String> _computeOccupiedZones(
+    List<CustomZone> zones,
+    List<PoseDetection> persons,
+  ) {
+    final occupied = <String>[];
+    for (final zone in zones) {
+      for (final person in persons) {
+        // Map 3D position (meters) to approximate 2D screen coordinates
+        final px = person.posX * 100 + 200;
+        final py = person.posY * 100 + 250;
+        if (_isPointInPolygon(Offset(px, py), zone.points)) {
+          occupied.add(zone.id);
+          break;
+        }
+      }
+    }
+    return occupied;
+  }
+
+  bool _isPointInPolygon(Offset point, List<Offset> polygon) {
+    if (polygon.length < 3) return false;
+    int intersections = 0;
+    for (int i = 0; i < polygon.length; i++) {
+      final a = polygon[i];
+      final b = polygon[(i + 1) % polygon.length];
+      if ((a.dy > point.dy) != (b.dy > point.dy)) {
+        final intersectX =
+            (b.dx - a.dx) * (point.dy - a.dy) / (b.dy - a.dy) + a.dx;
+        if (point.dx < intersectX) intersections++;
+      }
+    }
+    return intersections.isOdd;
   }
 
   void markAlertsRead() {
