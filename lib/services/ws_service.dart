@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/models.dart';
+import 'mqtt_service.dart';
 import 'notification_service.dart';
 
 sealed class SensingMessage {
@@ -207,6 +208,11 @@ class AppState {
   final bool isPaused;
   final int pausedIndex;
   final bool isPrivacyMode;
+  final bool mqttEnabled;
+  final String mqttHost;
+  final int mqttPort;
+  final bool mqttConnected;
+  final Map<String, String> semanticStates;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -221,6 +227,11 @@ class AppState {
     this.isPaused = false,
     this.pausedIndex = 0,
     this.isPrivacyMode = false,
+    this.mqttEnabled = false,
+    this.mqttHost = 'localhost',
+    this.mqttPort = 1883,
+    this.mqttConnected = false,
+    this.semanticStates = const {},
   });
 
   AppState copyWith({
@@ -236,6 +247,11 @@ class AppState {
     bool? isPaused,
     int? pausedIndex,
     bool? isPrivacyMode,
+    bool? mqttEnabled,
+    String? mqttHost,
+    int? mqttPort,
+    bool? mqttConnected,
+    Map<String, String>? semanticStates,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -250,6 +266,11 @@ class AppState {
         isPaused: isPaused ?? this.isPaused,
         pausedIndex: pausedIndex ?? this.pausedIndex,
         isPrivacyMode: isPrivacyMode ?? this.isPrivacyMode,
+        mqttEnabled: mqttEnabled ?? this.mqttEnabled,
+        mqttHost: mqttHost ?? this.mqttHost,
+        mqttPort: mqttPort ?? this.mqttPort,
+        mqttConnected: mqttConnected ?? this.mqttConnected,
+        semanticStates: semanticStates ?? this.semanticStates,
       );
 }
 
@@ -258,6 +279,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
   StreamSubscription<SensingMessage>? _msgSub;
   StreamSubscription<WsConnectionState>? _connSub;
   StreamSubscription<String>? _errSub;
+  MqttService? _mqtt;
 
   AppStateNotifier() : super(const AppState());
 
@@ -469,6 +491,42 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void togglePrivacyMode() {
     state = state.copyWith(isPrivacyMode: !state.isPrivacyMode);
+  }
+
+  Future<void> toggleMqtt() async {
+    if (state.mqttEnabled) {
+      _mqtt?.disconnect();
+      _mqtt = null;
+      state = state.copyWith(mqttEnabled: false, mqttConnected: false);
+    } else {
+      state = state.copyWith(mqttEnabled: true);
+      try {
+        _mqtt = MqttService(
+          host: state.mqttHost,
+          port: state.mqttPort,
+          onMessage: (topic, payload) {
+            final key = topic.split('/').last;
+            state = state.copyWith(
+              semanticStates: {...state.semanticStates, key: payload.toString()},
+            );
+          },
+        );
+        await _mqtt!.connect();
+        _mqtt!.subscribe('homeassistant/#');
+        state = state.copyWith(mqttConnected: true);
+      } catch (e) {
+        state = state.copyWith(mqttEnabled: false, mqttConnected: false);
+        _mqtt = null;
+      }
+    }
+  }
+
+  void updateMqttHost(String host) {
+    state = state.copyWith(mqttHost: host);
+  }
+
+  void updateMqttPort(int port) {
+    state = state.copyWith(mqttPort: port);
   }
 
   void togglePause() {
