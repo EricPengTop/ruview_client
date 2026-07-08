@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/models.dart';
+import 'notification_service.dart';
 
 sealed class SensingMessage {
   const SensingMessage();
@@ -368,6 +369,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
         for (final alert in newAlerts) {
           debugPrint('[RuView] 🔔 ${alert.type.label}: ${alert.type.description}');
+          if (alert.type == AlertType.presenceAppeared ||
+              alert.type == AlertType.presenceDisappeared ||
+              alert.type == AlertType.signalLow) {
+            NotificationService.show(alert.type.label, alert.type.description);
+          }
         }
       }
     });
