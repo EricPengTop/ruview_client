@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -127,6 +129,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     border: OutlineInputBorder(),
                     isDense: true),
                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _scanLocalhost(context),
+                      icon: const Icon(Icons.dns, size: 16),
+                      label: const Text('本机探测'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _scanNetwork(context),
+                      icon: const Icon(Icons.wifi_find, size: 16),
+                      label: const Text('局域网发现'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -308,6 +330,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+Future<void> _scanLocalhost(BuildContext context) async {
+  final found = <String>[];
+  for (final port in [3000, 3001, 8765, 8000, 8080]) {
+    try {
+      final socket = await Socket.connect(
+        'localhost',
+        port,
+        timeout: const Duration(milliseconds: 500),
+      );
+      socket.destroy();
+      found.add('$port');
+    } catch (_) {}
+  }
+
+  if (context.mounted) {
+    if (found.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('本机未发现 RuView 服务')),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('本机发现'),
+          content: Text('以下端口有服务响应: ${found.join(', ')}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+}
+
+Future<void> _scanNetwork(BuildContext context) async {
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('局域网发现需手动输入 IP，格式如 192.168.1.x')),
     );
   }
 }
