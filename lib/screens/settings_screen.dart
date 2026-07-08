@@ -44,6 +44,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           _section('告警日志'),
           _buildAlertsCard(notifier, state),
+          _section('告警规则'),
+          _buildAlertRules(notifier, state),
           _section('隐私'),
           _buildPrivacyCard(notifier, state),
           _section('MQTT 语义状态'),
@@ -300,7 +302,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return Icons.people;
       case AlertType.signalLow:
         return Icons.signal_cellular_alt;
+      case AlertType.hrHigh:
+      case AlertType.hrLow:
+      case AlertType.brHigh:
+      case AlertType.brLow:
+        return Icons.monitor_heart;
     }
+  }
+
+  Widget _buildAlertRules(AppStateNotifier notifier, AppState state) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _sliderRow('心率上限', state.hrMax, 0, 200, notifier.setHrMax, 'bpm'),
+            _sliderRow('心率下限', state.hrMin, 0, 200, notifier.setHrMin, 'bpm'),
+            const Divider(height: 20),
+            _sliderRow('呼吸上限', state.brMax, 0, 50, notifier.setBrMax, 'bpm'),
+            _sliderRow('呼吸下限', state.brMin, 0, 50, notifier.setBrMin, 'bpm'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sliderRow(String label, double value, double min, double max,
+      void Function(double) onChanged, String unit) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(width: 72, child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade400))),
+          Expanded(
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              label: '${value.toStringAsFixed(0)} $unit',
+              onChanged: onChanged,
+            ),
+          ),
+          SizedBox(
+            width: 52,
+            child: Text(
+              '${value.toStringAsFixed(0)} $unit',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPrivacyCard(AppStateNotifier notifier, AppState state) {

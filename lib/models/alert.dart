@@ -5,6 +5,10 @@ enum AlertType {
   motionStopped,
   personCountChanged,
   signalLow,
+  hrHigh,
+  hrLow,
+  brHigh,
+  brLow,
 }
 
 extension AlertTypeLabel on AlertType {
@@ -22,6 +26,14 @@ extension AlertTypeLabel on AlertType {
         return '人数变化';
       case AlertType.signalLow:
         return '信号质量低';
+      case AlertType.hrHigh:
+        return '心率过高';
+      case AlertType.hrLow:
+        return '心率过低';
+      case AlertType.brHigh:
+        return '呼吸过快';
+      case AlertType.brLow:
+        return '呼吸过慢';
     }
   }
 
@@ -39,6 +51,14 @@ extension AlertTypeLabel on AlertType {
         return '区域内人数发生变化';
       case AlertType.signalLow:
         return '信号质量较低，可能影响检测精度';
+      case AlertType.hrHigh:
+        return '心率超过设定上限值';
+      case AlertType.hrLow:
+        return '心率低于设定下限值';
+      case AlertType.brHigh:
+        return '呼吸率超过设定上限值';
+      case AlertType.brLow:
+        return '呼吸率低于设定下限值';
     }
   }
 }

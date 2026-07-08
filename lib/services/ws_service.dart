@@ -215,6 +215,10 @@ class AppState {
   final int mqttPort;
   final bool mqttConnected;
   final Map<String, String> semanticStates;
+  final double hrMax;
+  final double hrMin;
+  final double brMax;
+  final double brMin;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -234,6 +238,10 @@ class AppState {
     this.mqttPort = 1883,
     this.mqttConnected = false,
     this.semanticStates = const {},
+    this.hrMax = 120,
+    this.hrMin = 40,
+    this.brMax = 25,
+    this.brMin = 5,
   });
 
   AppState copyWith({
@@ -254,6 +262,10 @@ class AppState {
     int? mqttPort,
     bool? mqttConnected,
     Map<String, String>? semanticStates,
+    double? hrMax,
+    double? hrMin,
+    double? brMax,
+    double? brMin,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -273,6 +285,10 @@ class AppState {
         mqttPort: mqttPort ?? this.mqttPort,
         mqttConnected: mqttConnected ?? this.mqttConnected,
         semanticStates: semanticStates ?? this.semanticStates,
+        hrMax: hrMax ?? this.hrMax,
+        hrMin: hrMin ?? this.hrMin,
+        brMax: brMax ?? this.brMax,
+        brMin: brMin ?? this.brMin,
       );
 }
 
@@ -396,7 +412,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
           debugPrint('[RuView] 🔔 ${alert.type.label}: ${alert.type.description}');
           if (alert.type == AlertType.presenceAppeared ||
               alert.type == AlertType.presenceDisappeared ||
-              alert.type == AlertType.signalLow) {
+              alert.type == AlertType.signalLow ||
+              alert.type == AlertType.hrHigh ||
+              alert.type == AlertType.brLow) {
             NotificationService.show(alert.type.label, alert.type.description);
           }
         }
@@ -477,6 +495,40 @@ class AppStateNotifier extends StateNotifier<AppState> {
       ));
     }
 
+    // Custom threshold alerts
+    final hr = curr.vitalSigns.heartRateBpm;
+    final br = curr.vitalSigns.breathingRateBpm;
+    final r = state;
+
+    if (hr > r.hrMax && prev.vitalSigns.heartRateBpm <= r.hrMax) {
+      alerts.add(Alert(
+        type: AlertType.hrHigh,
+        time: now,
+        details: '${hr.toStringAsFixed(1)} bpm > ${r.hrMax.toStringAsFixed(0)} bpm',
+      ));
+    }
+    if (hr < r.hrMin && prev.vitalSigns.heartRateBpm >= r.hrMin) {
+      alerts.add(Alert(
+        type: AlertType.hrLow,
+        time: now,
+        details: '${hr.toStringAsFixed(1)} bpm < ${r.hrMin.toStringAsFixed(0)} bpm',
+      ));
+    }
+    if (br > r.brMax && prev.vitalSigns.breathingRateBpm <= r.brMax) {
+      alerts.add(Alert(
+        type: AlertType.brHigh,
+        time: now,
+        details: '${br.toStringAsFixed(1)} bpm > ${r.brMax.toStringAsFixed(0)} bpm',
+      ));
+    }
+    if (br < r.brMin && prev.vitalSigns.breathingRateBpm >= r.brMin) {
+      alerts.add(Alert(
+        type: AlertType.brLow,
+        time: now,
+        details: '${br.toStringAsFixed(1)} bpm < ${r.brMin.toStringAsFixed(0)} bpm',
+      ));
+    }
+
     return alerts;
   }
 
@@ -531,6 +583,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void updateMqttPort(int port) {
     state = state.copyWith(mqttPort: port);
   }
+
+  void setHrMax(double v) => state = state.copyWith(hrMax: v);
+  void setHrMin(double v) => state = state.copyWith(hrMin: v);
+  void setBrMax(double v) => state = state.copyWith(brMax: v);
+  void setBrMin(double v) => state = state.copyWith(brMin: v);
 
   void togglePause() {
     final paused = !state.isPaused;

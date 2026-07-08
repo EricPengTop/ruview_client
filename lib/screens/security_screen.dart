@@ -260,7 +260,12 @@ class SecurityScreen extends ConsumerWidget {
       case AlertType.personCountChanged:
         return Colors.cyan;
       case AlertType.signalLow:
+      case AlertType.hrHigh:
+      case AlertType.brLow:
         return Colors.red;
+      case AlertType.hrLow:
+      case AlertType.brHigh:
+        return Colors.purple;
     }
   }
 

@@ -113,7 +113,12 @@ class AlertsScreen extends ConsumerWidget {
       case AlertType.personCountChanged:
         return Colors.cyan;
       case AlertType.signalLow:
+      case AlertType.hrHigh:
+      case AlertType.brLow:
         return Colors.red;
+      case AlertType.hrLow:
+      case AlertType.brHigh:
+        return Colors.purple;
     }
   }
 
@@ -131,6 +136,11 @@ class AlertsScreen extends ConsumerWidget {
         return Icons.people;
       case AlertType.signalLow:
         return Icons.signal_cellular_alt;
+      case AlertType.hrHigh:
+      case AlertType.hrLow:
+      case AlertType.brHigh:
+      case AlertType.brLow:
+        return Icons.monitor_heart;
     }
   }
 }
