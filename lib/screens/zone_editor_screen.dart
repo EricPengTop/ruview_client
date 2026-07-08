@@ -18,6 +18,11 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
   final List<Offset> _points = [];
   final _nameController = TextEditingController();
 
+  static const double _meterToPixel = 50;
+  static const double _offset = 4;
+
+  Offset _toPixel(double mx, double my) => Offset((mx + _offset) * _meterToPixel, (my + _offset) * _meterToPixel);
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -39,25 +44,16 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(s.getString('z_editor_dialog_title')),
-        content: TextField(
-          controller: _nameController,
-          decoration: InputDecoration(labelText: s.getString('z_editor_name'), border: const OutlineInputBorder()),
-          autofocus: true,
-        ),
+        content: TextField(controller: _nameController, decoration: InputDecoration(labelText: s.getString('z_editor_name'), border: const OutlineInputBorder()), autofocus: true),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(s.getString('z_editor_cancel'))),
-          FilledButton(
-            onPressed: () {
-              final name = _nameController.text.isEmpty ? '${s.getString("z_editor_default_name")}${Random().nextInt(100)}' : _nameController.text;
-              ref.read(appStateProvider.notifier).addZone(CustomZone(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
-              _nameController.clear();
-              _points.clear();
-              Navigator.pop(context);
-              setState(() {});
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.format('z_editor_saved', args: {'name': name}))));
-            },
-            child: Text(s.getString('z_editor_save')),
-          ),
+          FilledButton(onPressed: () {
+            final name = _nameController.text.isEmpty ? '${s.getString("z_editor_default_name")}${Random().nextInt(100)}' : _nameController.text;
+            ref.read(appStateProvider.notifier).addZone(CustomZone(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
+            _nameController.clear(); _points.clear();
+            Navigator.pop(context); setState(() {});
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.format('z_editor_saved', args: {'name': name}))));
+          }, child: Text(s.getString('z_editor_save'))),
         ],
       ),
     );
@@ -67,18 +63,13 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
     final s = ref.watch(appStringsProvider);
-    final persons = state.latestUpdate?.persons ?? [];
-
-    // Map person positions to canvas coordinates
-    final personDots = persons.map((p) {
-      return _PersonDot(
-        id: p.trackId,
-        pos: Offset(p.posX * 100 + 200, p.posY * 100 + 250),
-        confidence: p.confidence,
-      );
-    }).toList();
-
     final isConnected = state.connectionState.isConnected;
+    final persons = state.latestUpdate?.persons ?? [];
+    final signalField = state.latestUpdate?.signalField;
+    final nodes = state.latestUpdate?.nodes ?? [];
+
+    final personDots = persons.map((p) => _PersonDot(id: p.trackId, pos: _toPixel(p.posX, p.posY), confidence: p.confidence)).toList();
+    final sensorDots = nodes.map((n) => _SensorDot(id: n.nodeId, pos: _toPixel(n.posX, n.posY))).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -89,110 +80,206 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Row(
-              children: [
-                Icon(Icons.touch_app, size: 16, color: Colors.grey.shade400),
-                const SizedBox(width: 8),
-                Text(s.format('z_editor_hint', args: {'count': '${_points.length}'}), style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: isConnected ? Colors.green.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(
-                    isConnected ? '检测到 ${personDots.length} 人' : '未连接',
-                    style: TextStyle(fontSize: 11, color: isConnected ? Colors.green : Colors.grey),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (_points.length >= 3)
-                  Text(s.getString('z_editor_closable'), style: TextStyle(fontSize: 12, color: Colors.green.shade300)),
-              ],
-            ),
-          ),
-          Expanded(
+      body: Column(children: [
+        // Top info bar
+        Container(
+          padding: const EdgeInsets.all(10),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Row(children: [
+            Icon(Icons.touch_app, size: 14, color: Colors.grey.shade400), const SizedBox(width: 6),
+            Text(s.format('z_editor_hint', args: {'count': '${_points.length}'}), style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+            const Spacer(),
+            _infoChip(isConnected ? '检测 ${personDots.length} 人' : '未连接', isConnected ? Colors.green : Colors.grey),
+            const SizedBox(width: 6),
+            if (sensorDots.isNotEmpty) _infoChip('传感器 ${sensorDots.length}', Colors.blue),
+            const SizedBox(width: 6),
+            if (_points.length >= 3) _infoChip('可闭合', Colors.green.shade300),
+          ]),
+        ),
+        // Canvas
+        Expanded(
+          child: InteractiveViewer(
+            minScale: 0.5, maxScale: 3.0,
             child: GestureDetector(
               onTapDown: (d) => _addPoint(d.localPosition),
               child: CustomPaint(
-                size: Size.infinite,
-                painter: _ZonePainter(points: _points, persons: personDots),
+                size: const Size(400, 400),
+                painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        // Color legend
+        Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Row(children: [
+            Text('信号弱', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+            const SizedBox(width: 4),
+            Expanded(child: _buildLegendGradient()),
+            const SizedBox(width: 4),
+            Text('信号强', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+          ]),
+        ),
+      ]),
     );
   }
+
+  Widget _infoChip(String label, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+    child: Text(label, style: TextStyle(fontSize: 10, color: color)),
+  );
+
+  Widget _buildLegendGradient() => Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(4),
+      gradient: const LinearGradient(colors: [Color(0xFF1a237e), Colors.blue, Colors.green, Colors.yellow, Colors.orange, Colors.red]),
+    ),
+  );
 }
 
-class _PersonDot {
-  final int id;
-  final Offset pos;
-  final double confidence;
-  const _PersonDot({required this.id, required this.pos, required this.confidence});
-}
+class _PersonDot { final int id; final Offset pos; final double confidence; const _PersonDot({required this.id, required this.pos, required this.confidence}); }
+class _SensorDot { final int id; final Offset pos; const _SensorDot({required this.id, required this.pos}); }
 
-class _ZonePainter extends CustomPainter {
+class _RoomPainter extends CustomPainter {
   final List<Offset> points;
   final List<_PersonDot> persons;
+  final List<_SensorDot> sensors;
+  final SignalField? signalField;
 
-  _ZonePainter({required this.points, required this.persons});
+  _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField});
+
+  // Color scale: blue (weak) → green → yellow → orange → red (strong)
+  static Color _heatColor(double t) {
+    if (t <= 0) return const Color(0xFF1a237e); // deep blue
+    if (t >= 1) return Colors.red;
+    if (t < 0.25) return Color.lerp(const Color(0xFF1a237e), Colors.blue, t * 4)!;
+    if (t < 0.5) return Color.lerp(Colors.blue, Colors.green, (t - 0.25) * 4)!;
+    if (t < 0.75) return Color.lerp(Colors.green, Colors.orange, (t - 0.5) * 4)!;
+    return Color.lerp(Colors.orange, Colors.red, (t - 0.75) * 4)!;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw grid background
-    final gridPaint = Paint()..color = Colors.grey.withValues(alpha: 0.1)..strokeWidth = 0.5;
-    for (double x = 0; x < size.width; x += 50) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y < size.height; y += 50) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    // Layer 1: Coordinate axes
+    _drawAxes(canvas, size);
+
+    // Layer 2: Heatmap background
+    _drawHeatmap(canvas, size);
+
+    // Layer 3: Sensor markers
+    _drawSensors(canvas);
+
+    // Layer 4: Person crosshairs
+    _drawPersons(canvas);
+
+    // Layer 5: User polygon
+    _drawPolygon(canvas);
+  }
+
+  void _drawAxes(Canvas canvas, Size size) {
+    final grid = Paint()..color = Colors.white.withValues(alpha: 0.06)..strokeWidth = 0.5;
+    final axisPaint = Paint()..color = Colors.white.withValues(alpha: 0.15)..strokeWidth = 1;
+    final textStyle = TextStyle(color: Colors.grey.shade600, fontSize: 9);
+
+    // Grid lines every 1 meter
+    for (int i = 0; i <= 8; i++) {
+      final x = i * 50.0;
+      final y = i * 50.0;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
 
-    // Draw person positions
-    final personDot = Paint()..style = PaintingStyle.fill;
-    final personCross = Paint()..color = Colors.green.withValues(alpha: 0.5)..strokeWidth = 1.5..style = PaintingStyle.stroke;
-    for (final p in persons) {
-      final color = p.confidence > 0.7 ? Colors.green : Colors.orange;
-      personDot.color = color.withValues(alpha: 0.6);
-      canvas.drawCircle(p.pos, 6, personDot);
-      canvas.drawLine(p.pos - const Offset(10, 0), p.pos + const Offset(10, 0), personCross);
-      canvas.drawLine(p.pos - const Offset(0, 10), p.pos + const Offset(0, 10), personCross);
-      final tp = TextPainter(
-        text: TextSpan(text: '${p.id}', style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-        textDirection: TextDirection.ltr,
-      );
+    // Axis origin lines
+    final origin = Offset(200, 200); // (0m, 0m)
+    canvas.drawLine(Offset(0, origin.dy), Offset(size.width, origin.dy), axisPaint);
+    canvas.drawLine(Offset(origin.dx, 0), Offset(origin.dx, size.height), axisPaint);
+
+    // Axis labels
+    for (int m = -4; m <= 4; m++) {
+      final x = (m + 4) * 50.0;
+      final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
       tp.layout();
-      tp.paint(canvas, p.pos + const Offset(10, -14));
+      tp.paint(canvas, Offset(x - tp.width / 2, origin.dy + 2));
     }
+    for (int m = -4; m <= 4; m++) {
+      if (m == 0) continue; // skip origin overlap
+      final y = (m + 4) * 50.0;
+      final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
+      tp.layout();
+      tp.paint(canvas, Offset(origin.dx + 2, y - tp.height / 2));
+    }
+  }
 
-    // Draw polygon
-    final fill = Paint()..color = Colors.cyan.withValues(alpha: 0.1)..style = PaintingStyle.fill;
-    final stroke = Paint()..color = Colors.cyan.withValues(alpha: 0.6)..strokeWidth = 2..style = PaintingStyle.stroke;
+  void _drawHeatmap(Canvas canvas, Size size) {
+    final field = signalField;
+    if (field == null || field.values.isEmpty) return;
+
+    final cellW = size.width / field.width;
+    final cellH = size.height / field.height;
+
+    for (int row = 0; row < field.height; row++) {
+      for (int col = 0; col < field.width; col++) {
+        final val = field.valueAt(col, row);
+        final paint = Paint()..color = _heatColor(val).withValues(alpha: 0.5);
+        canvas.drawRect(Rect.fromLTWH(col * cellW, (field.height - 1 - row) * cellH, cellW, cellH), paint);
+      }
+    }
+  }
+
+  void _drawSensors(Canvas canvas) {
+    for (final s in sensors) {
+      final fill = Paint()..color = Colors.blue.withValues(alpha: 0.3)..style = PaintingStyle.fill;
+      final border = Paint()..color = Colors.blue..strokeWidth = 1.5..style = PaintingStyle.stroke;
+      const rect = Rect.fromLTWH(-7, -7, 14, 14);
+      canvas.save();
+      canvas.translate(s.pos.dx, s.pos.dy);
+      canvas.drawRect(rect, fill);
+      canvas.drawRect(rect, border);
+      canvas.restore();
+
+      final tp = TextPainter(text: TextSpan(text: '传感器${s.id}', style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.w600)), textDirection: TextDirection.ltr);
+      tp.layout();
+      tp.paint(canvas, s.pos + const Offset(10, -18));
+    }
+  }
+
+  void _drawPersons(Canvas canvas) {
+    final dot = Paint()..style = PaintingStyle.fill;
+    final cross = Paint()..strokeWidth = 1.5..style = PaintingStyle.stroke;
+    for (final p in persons) {
+      final c = p.confidence > 0.7 ? Colors.green : Colors.orange;
+      dot.color = c.withValues(alpha: 0.5);
+      cross.color = c;
+      canvas.drawCircle(p.pos, 5, dot);
+      canvas.drawLine(p.pos - const Offset(8, 0), p.pos + const Offset(8, 0), cross);
+      canvas.drawLine(p.pos - const Offset(0, 8), p.pos + const Offset(0, 8), cross);
+      final tp = TextPainter(text: TextSpan(text: '${p.id}', style: TextStyle(color: c, fontSize: 9, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr);
+      tp.layout(); tp.paint(canvas, p.pos + const Offset(8, -14));
+    }
+  }
+
+  void _drawPolygon(Canvas canvas) {
+    final fill = Paint()..color = Colors.cyan.withValues(alpha: 0.08)..style = PaintingStyle.fill;
+    final stroke = Paint()..color = Colors.cyan.withValues(alpha: 0.5)..strokeWidth = 2..style = PaintingStyle.stroke;
     final dot = Paint()..color = Colors.cyan..style = PaintingStyle.fill;
 
     if (points.length >= 3) {
       final path = Path()..addPolygon(points, true);
-      canvas.drawPath(path, fill);
-      canvas.drawPath(path, stroke);
+      canvas.drawPath(path, fill); canvas.drawPath(path, stroke);
     } else if (points.length == 2) {
       canvas.drawLine(points[0], points[1], stroke);
     }
     for (int i = 0; i < points.length; i++) {
-      canvas.drawCircle(points[i], 5, dot);
-      final tp = TextPainter(
-        text: TextSpan(text: '${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 10)),
-        textDirection: TextDirection.ltr,
-      );
-      tp.layout();
-      tp.paint(canvas, points[i] + const Offset(8, -16));
+      canvas.drawCircle(points[i], 4, dot);
+      final tp = TextPainter(text: TextSpan(text: '${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 9)), textDirection: TextDirection.ltr);
+      tp.layout(); tp.paint(canvas, points[i] + const Offset(7, -14));
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ZonePainter old) => old.points != points || old.persons != persons;
+  bool shouldRepaint(covariant _RoomPainter old) =>
+      old.points != points || old.persons != persons || old.sensors != sensors || old.signalField != signalField;
 }
