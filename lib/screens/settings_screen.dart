@@ -227,9 +227,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(s.getString('alert_log'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(
+                          s.getString('alert_log'),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text(s.format('alert_total', args: {'count': '${st.alerts.length}'}), style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                        Text(
+                          s.format(
+                            'alert_total',
+                            args: {'count': '${st.alerts.length}'},
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -245,9 +260,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: n.markAlertsRead, child: Text(s.getString('alert_mark_read'))),
+                  TextButton(
+                    onPressed: n.markAlertsRead,
+                    child: Text(s.getString('alert_mark_read')),
+                  ),
                   const SizedBox(width: 4),
-                  TextButton(onPressed: n.clearAlerts, child: Text(s.getString('alert_clear'))),
+                  TextButton(
+                    onPressed: n.clearAlerts,
+                    child: Text(s.getString('alert_clear')),
+                  ),
                 ],
               ),
             ),

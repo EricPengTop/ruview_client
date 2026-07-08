@@ -51,10 +51,15 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             if (state.msgCount > 0) ...[
               const SizedBox(width: 8),
               Chip(
-                label: Text('#${state.msgCount}', style: const TextStyle(fontSize: 11)),
+                label: Text(
+                  '#${state.msgCount}',
+                  style: const TextStyle(fontSize: 11),
+                ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
-                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.secondaryContainer,
               ),
             ],
           ],
@@ -74,32 +79,53 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
         children: [
           _buildSettingsBar(isConnected, s),
           const Divider(height: 1),
-          if (state.latestUpdate != null) _buildVitalsStrip(state.latestUpdate!, s),
+          if (state.latestUpdate != null)
+            _buildVitalsStrip(state.latestUpdate!, s),
           Expanded(child: _buildLogView(state.log, s)),
         ],
       ),
     );
   }
 
-  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
+  Widget _buildConnectionChip(
+    AppStateNotifier notifier,
+    bool isConnected,
+    AppStrings s,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(isConnected ? Icons.circle : Icons.circle_outlined, color: isConnected ? Colors.green : Colors.grey, size: 12),
+        Icon(
+          isConnected ? Icons.circle : Icons.circle_outlined,
+          color: isConnected ? Colors.green : Colors.grey,
+          size: 12,
+        ),
         const SizedBox(width: 6),
-        Text(isConnected ? s.getString('connected') : s.getString('not_connected'), style: const TextStyle(fontSize: 14)),
+        Text(
+          isConnected ? s.getString('connected') : s.getString('not_connected'),
+          style: const TextStyle(fontSize: 14),
+        ),
         const SizedBox(width: 8),
         FilledButton.tonalIcon(
           onPressed: () {
             if (isConnected) {
               notifier.disconnect();
             } else {
-              notifier.connect(_hostController.text, int.tryParse(_portController.text) ?? 3001);
+              notifier.connect(
+                _hostController.text,
+                int.tryParse(_portController.text) ?? 3001,
+              );
             }
           },
           icon: Icon(isConnected ? Icons.stop : Icons.play_arrow, size: 18),
-          label: Text(isConnected ? s.getString('disconnect') : s.getString('connect')),
-          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+          label: Text(
+            isConnected ? s.getString('disconnect') : s.getString('connect'),
+          ),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
         ),
       ],
     );
@@ -115,7 +141,11 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             child: TextField(
               controller: _hostController,
               enabled: !isConnected,
-              decoration: InputDecoration(labelText: s.getString('srv_host'), border: const OutlineInputBorder(), isDense: true),
+              decoration: InputDecoration(
+                labelText: s.getString('srv_host'),
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -123,7 +153,11 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
             child: TextField(
               controller: _portController,
               enabled: !isConnected,
-              decoration: InputDecoration(labelText: s.getString('srv_port'), border: const OutlineInputBorder(), isDense: true),
+              decoration: InputDecoration(
+                labelText: s.getString('srv_port'),
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
               keyboardType: TextInputType.number,
             ),
           ),
@@ -139,12 +173,38 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _vitalChip(s.getString('dash_presence_yes'), update.classification.presence ? s.getString('yes') : s.getString('no'), update.classification.presence ? Colors.green : Colors.red),
-          _vitalChip(s.getString('dash_motion'), _motionLabel(update.classification.motionLevel, s), Colors.orange),
-          _vitalChip(s.getString('vitals_hr'), '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm', null),
-          _vitalChip(s.getString('vitals_br'), '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm', null),
-          _vitalChip(s.getString('dash_persons'), '${update.estimatedPersons}', null),
-          _vitalChip(s.getString('dash_signal'), '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%', null),
+          _vitalChip(
+            s.getString('dash_presence_yes'),
+            update.classification.presence
+                ? s.getString('yes')
+                : s.getString('no'),
+            update.classification.presence ? Colors.green : Colors.red,
+          ),
+          _vitalChip(
+            s.getString('dash_motion'),
+            _motionLabel(update.classification.motionLevel, s),
+            Colors.orange,
+          ),
+          _vitalChip(
+            s.getString('vitals_hr'),
+            '${update.vitalSigns.heartRateBpm.toStringAsFixed(0)} bpm',
+            null,
+          ),
+          _vitalChip(
+            s.getString('vitals_br'),
+            '${update.vitalSigns.breathingRateBpm.toStringAsFixed(0)} bpm',
+            null,
+          ),
+          _vitalChip(
+            s.getString('dash_persons'),
+            '${update.estimatedPersons}',
+            null,
+          ),
+          _vitalChip(
+            s.getString('dash_signal'),
+            '${(update.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
+            null,
+          ),
         ],
       ),
     );
@@ -167,9 +227,19 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+        ),
         const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
       ],
     );
   }
@@ -198,7 +268,14 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
+          child: Text(
+            entry,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
+              color: textColor,
+            ),
+          ),
         );
       },
     );
