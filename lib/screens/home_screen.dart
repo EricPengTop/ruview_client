@@ -31,12 +31,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   final _titles = [
+    (AppStrings s) => s.getString('tab_overview_full'),
     (AppStrings s) => s.getString('tab_overview'),
-    (AppStrings s) => '生命体征',
-    (AppStrings s) => '人体姿态',
-    (AppStrings s) => '区域监控',
-    (AppStrings s) => '告警中心',
-    (AppStrings s) => '安全监控',
+    (AppStrings s) => s.getString('tab_pose'),
+    (AppStrings s) => s.getString('tab_zones'),
+    (AppStrings s) => s.getString('tab_security_full'),
   ];
 
   @override
@@ -53,13 +52,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 20),
-            tooltip: '设置',
+            tooltip: s.getString('settings'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
-          _buildConnectionChip(notifier, isConnected),
+          _buildConnectionChip(notifier, isConnected, s),
           const SizedBox(width: 12),
         ],
       ),
@@ -114,7 +113,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected) {
+  Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -125,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(width: 6),
         Text(
-          isConnected ? '已连接' : '未连接',
+          isConnected ? s.getString('connected') : s.getString('not_connected'),
           style: const TextStyle(fontSize: 14),
         ),
         const SizedBox(width: 8),
@@ -136,12 +135,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             } else {
               showDialog(
                 context: context,
-                builder: (_) => _ConnectDialog(notifier: notifier),
+                builder: (_) => _ConnectDialog(notifier: notifier, s: s),
               );
             }
           },
           icon: Icon(isConnected ? Icons.stop : Icons.play_arrow, size: 18),
-          label: Text(isConnected ? '断开连接' : '连接'),
+          label: Text(isConnected ? s.getString('disconnect') : s.getString('connect')),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             minimumSize: Size.zero,
@@ -155,7 +154,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _ConnectDialog extends StatefulWidget {
   final AppStateNotifier notifier;
-  const _ConnectDialog({required this.notifier});
+  final AppStrings s;
+  const _ConnectDialog({required this.notifier, required this.s});
 
   @override
   State<_ConnectDialog> createState() => _ConnectDialogState();
@@ -175,23 +175,23 @@ class _ConnectDialogState extends State<_ConnectDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('连接 RuView 服务'),
+      title: Text(widget.s.getString('connect_dialog_title')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _host,
-            decoration: const InputDecoration(
-              labelText: '主机地址',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: widget.s.getString('srv_host'),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _port,
-            decoration: const InputDecoration(
-              labelText: '端口',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: widget.s.getString('srv_port'),
+              border: const OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
           ),
@@ -200,7 +200,7 @@ class _ConnectDialogState extends State<_ConnectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
+          child: Text(widget.s.getString('connect_cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -210,7 +210,7 @@ class _ConnectDialogState extends State<_ConnectDialog> {
             );
             Navigator.pop(context);
           },
-          child: const Text('连接'),
+          child: Text(widget.s.getString('connect')),
         ),
       ],
     );
