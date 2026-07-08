@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +24,23 @@ class VitalsScreen extends ConsumerWidget {
       return const Center(child: Text('等待生命体征数据...'));
     }
 
+    if (state.isPrivacyMode) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.visibility_off, size: 48, color: Colors.grey.shade600),
+            const SizedBox(height: 12),
+            Text('隐私模式已启用',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade400)),
+            const SizedBox(height: 4),
+            Text('心率/呼吸率数据已隐藏',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          ],
+        ),
+      );
+    }
+
     final paused = state.isPaused;
     final selectedIndex = state.pausedIndex.clamp(0, history.length - 1);
     final selectedRecord = history[selectedIndex];
@@ -30,7 +49,7 @@ class VitalsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          _buildControlBar(notifier, paused, history.length, selectedRecord),
+          _buildControlBar(notifier, paused, history.length, selectedRecord, context, history),
           const SizedBox(height: 8),
           _buildSlider(notifier, paused, history.length, selectedIndex),
           const SizedBox(height: 8),
@@ -51,6 +70,8 @@ class VitalsScreen extends ConsumerWidget {
     bool paused,
     int frameCount,
     VitalsRecord record,
+    BuildContext context,
+    List<VitalsRecord> history,
   ) {
     return Row(
       children: [
@@ -91,6 +112,12 @@ class VitalsScreen extends ConsumerWidget {
         _buildLatestValue('心率', Colors.red, record),
         const SizedBox(width: 12),
         _buildLatestValue('呼吸率', Colors.blue, record),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.download, size: 18),
+          tooltip: '导出 CSV',
+          onPressed: () => _exportCsv(context, history),
+        ),
       ],
     );
   }
@@ -240,5 +267,41 @@ class VitalsScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+Future<void> _exportCsv(BuildContext context, List<VitalsRecord> history) async {
+  final ts = DateTime.now()
+      .toIso8601String()
+      .replaceAll(':', '-')
+      .replaceAll('.', '-')
+      .substring(0, 19);
+  final home = Platform.environment['HOME'] ?? '.';
+  final path = '$home/Downloads/ruview_导出_$ts.csv';
+
+  final buf = StringBuffer()
+    ..writeln('时间,心率(bpm),心率可信度,呼吸率(bpm),呼吸率可信度');
+  for (final r in history) {
+    buf.writeln(
+      '${r.time.toIso8601String()},${r.heartRate},${r.hrConfidence},${r.breathingRate},${r.brConfidence}',
+    );
+  }
+
+  try {
+    await File(path).writeAsString(buf.toString());
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('已导出 ${history.length} 条记录 → $path'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('导出失败: $e')),
+      );
+    }
   }
 }

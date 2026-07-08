@@ -205,6 +205,7 @@ class AppState {
   final bool isDarkMode;
   final bool isPaused;
   final int pausedIndex;
+  final bool isPrivacyMode;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -218,6 +219,7 @@ class AppState {
     this.isDarkMode = true,
     this.isPaused = false,
     this.pausedIndex = 0,
+    this.isPrivacyMode = false,
   });
 
   AppState copyWith({
@@ -232,6 +234,7 @@ class AppState {
     bool? isDarkMode,
     bool? isPaused,
     int? pausedIndex,
+    bool? isPrivacyMode,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -245,6 +248,7 @@ class AppState {
         isDarkMode: isDarkMode ?? this.isDarkMode,
         isPaused: isPaused ?? this.isPaused,
         pausedIndex: pausedIndex ?? this.pausedIndex,
+        isPrivacyMode: isPrivacyMode ?? this.isPrivacyMode,
       );
 }
 
@@ -313,10 +317,14 @@ class AppStateNotifier extends StateNotifier<AppState> {
                 .join(' ')
             : '-';
 
+        final vitalsPart = state.isPrivacyMode
+            ? 'HR/BR=已隐藏'
+            : '心率=${hr.toStringAsFixed(1)}bpm(可信度${(hrConf * 100).toStringAsFixed(0)}%) '
+                '呼吸率=${br.toStringAsFixed(1)}bpm(可信度${(brConf * 100).toStringAsFixed(0)}%)';
+
         final line =
             '#$count | $ts | t=$tick | $presence $motion (分类置信${(classifierConf * 100).toStringAsFixed(0)}%) | '
-            '心率=${hr.toStringAsFixed(1)}bpm(可信度${(hrConf * 100).toStringAsFixed(0)}%) '
-            '呼吸率=${br.toStringAsFixed(1)}bpm(可信度${(brConf * 100).toStringAsFixed(0)}%) | '
+            '$vitalsPart | '
             '信号质量=${(signalQ * 100).toStringAsFixed(0)}% | '
             '人数=$nPersons [$personDetails] | RSSI=${rssi.toStringAsFixed(0)}dBm';
 
@@ -451,6 +459,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void toggleTheme() {
     state = state.copyWith(isDarkMode: !state.isDarkMode);
+  }
+
+  void togglePrivacyMode() {
+    state = state.copyWith(isPrivacyMode: !state.isPrivacyMode);
   }
 
   void togglePause() {

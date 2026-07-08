@@ -156,6 +156,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        _sectionHeader('隐私'),
+        const SizedBox(height: 8),
+        Card(
+          child: SwitchListTile(
+            title: const Text('隐私模式'),
+            subtitle: const Text('隐藏心率/呼吸率等生物特征数据'),
+            value: state.isPrivacyMode,
+            onChanged: (_) => notifier.togglePrivacyMode(),
+            secondary: Icon(
+              state.isPrivacyMode ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         _sectionHeader('外观'),
         const SizedBox(height: 8),
         Card(
