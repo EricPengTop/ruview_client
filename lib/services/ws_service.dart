@@ -200,6 +200,8 @@ class AppState {
   final String? lastError;
   final int msgCount;
   final List<VitalsRecord> vitalsHistory;
+  final List<Alert> alerts;
+  final int unreadAlertCount;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -208,6 +210,8 @@ class AppState {
     this.lastError,
     this.msgCount = 0,
     this.vitalsHistory = const [],
+    this.alerts = const [],
+    this.unreadAlertCount = 0,
   });
 
   AppState copyWith({
@@ -217,6 +221,8 @@ class AppState {
     String? lastError,
     int? msgCount,
     List<VitalsRecord>? vitalsHistory,
+    List<Alert>? alerts,
+    int? unreadAlertCount,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -225,6 +231,8 @@ class AppState {
         lastError: lastError,
         msgCount: msgCount ?? this.msgCount,
         vitalsHistory: vitalsHistory ?? this.vitalsHistory,
+        alerts: alerts ?? this.alerts,
+        unreadAlertCount: unreadAlertCount ?? this.unreadAlertCount,
       );
 }
 
@@ -316,12 +324,26 @@ class AppStateNotifier extends StateNotifier<AppState> {
           history.removeAt(0);
         }
 
+        final prev = state.latestUpdate;
+        final newAlerts = _detectAlerts(prev, u, now);
+        final totalAlerts = [...state.alerts, ...newAlerts];
+        if (totalAlerts.length > 200) {
+          totalAlerts.removeRange(0, totalAlerts.length - 200);
+        }
+
         state = state.copyWith(
           latestUpdate: u,
           msgCount: count,
           log: [...state.log, line],
           vitalsHistory: history,
+          alerts: totalAlerts,
+          unreadAlertCount:
+              state.unreadAlertCount + newAlerts.length,
         );
+
+        for (final alert in newAlerts) {
+          debugPrint('[RuView] 🔔 ${alert.type.label}: ${alert.type.description}');
+        }
       }
     });
 
@@ -347,6 +369,67 @@ class AppStateNotifier extends StateNotifier<AppState> {
       default:
         return level;
     }
+  }
+
+  List<Alert> _detectAlerts(
+      SensingUpdate? prev, SensingUpdate curr, DateTime now) {
+    final alerts = <Alert>[];
+
+    if (prev == null) return alerts;
+
+    // Presence change
+    if (prev.classification.presence != curr.classification.presence) {
+      if (curr.classification.presence) {
+        alerts.add(Alert(
+          type: AlertType.presenceAppeared,
+          time: now,
+          details: '检测到${curr.estimatedPersons}人',
+        ));
+      } else {
+        alerts.add(Alert(
+          type: AlertType.presenceDisappeared,
+          time: now,
+        ));
+      }
+    }
+
+    // Motion change
+    if (prev.classification.motionLevel != curr.classification.motionLevel) {
+      if (curr.classification.motionLevel == 'present_moving') {
+        alerts.add(Alert(type: AlertType.motionStarted, time: now));
+      } else if (curr.classification.motionLevel == 'present_still') {
+        alerts.add(Alert(type: AlertType.motionStopped, time: now));
+      }
+    }
+
+    // Person count change
+    if (prev.estimatedPersons != curr.estimatedPersons) {
+      alerts.add(Alert(
+        type: AlertType.personCountChanged,
+        time: now,
+        details: '${prev.estimatedPersons}人 → ${curr.estimatedPersons}人',
+      ));
+    }
+
+    // Low signal quality (below 30%)
+    if (curr.vitalSigns.signalQuality < 0.3 &&
+        prev.vitalSigns.signalQuality >= 0.3) {
+      alerts.add(Alert(
+        type: AlertType.signalLow,
+        time: now,
+        details: '当前${(curr.vitalSigns.signalQuality * 100).toStringAsFixed(0)}%',
+      ));
+    }
+
+    return alerts;
+  }
+
+  void markAlertsRead() {
+    state = state.copyWith(unreadAlertCount: 0);
+  }
+
+  void clearAlerts() {
+    state = state.copyWith(alerts: [], unreadAlertCount: 0);
   }
 
   @override

@@ -6,6 +6,7 @@ import 'dashboard_screen.dart';
 import 'vitals_screen.dart';
 import 'pose_screen.dart';
 import 'zones_screen.dart';
+import 'alerts_screen.dart';
 import 'debug_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -23,15 +24,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     VitalsScreen(),
     PoseScreen(),
     ZonesScreen(),
+    AlertsScreen(),
   ];
 
-  final _titles = const ['概览', '生命体征', '人体姿态', '区域监控'];
+  final _titles = const ['概览', '生命体征', '人体姿态', '区域监控', '告警中心'];
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
     final isConnected = state.connectionState.isConnected;
+    final unread = state.unreadAlertCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -52,27 +55,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: _screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(
+        onDestinationSelected: (i) {
+          setState(() => _currentIndex = i);
+          if (i == 4) notifier.markAlertsRead();
+        },
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
             label: '概览',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.favorite_outline),
             selectedIcon: Icon(Icons.favorite),
             label: '生命体征',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.accessibility_new_outlined),
             selectedIcon: Icon(Icons.accessibility_new),
             label: '姿态',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map),
             label: '区域',
+          ),
+          NavigationDestination(
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text(unread.toString()),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text(unread.toString()),
+              child: const Icon(Icons.notifications),
+            ),
+            label: '告警',
           ),
         ],
       ),

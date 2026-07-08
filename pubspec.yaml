@@ -13,6 +13,7 @@ dependencies:
   web_socket_channel: ^3.0.2
   flutter_riverpod: ^2.6.1
   fl_chart: ^0.70.2
+  flutter_local_notifications: ^18.0.0
   riverpod_annotation: ^2.6.1
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
