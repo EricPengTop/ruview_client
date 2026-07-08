@@ -219,6 +219,7 @@ class AppState {
   final double hrMin;
   final double brMax;
   final double brMin;
+  final List<CustomZone> customZones;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -242,6 +243,7 @@ class AppState {
     this.hrMin = 40,
     this.brMax = 25,
     this.brMin = 5,
+    this.customZones = const [],
   });
 
   AppState copyWith({
@@ -266,6 +268,7 @@ class AppState {
     double? hrMin,
     double? brMax,
     double? brMin,
+    List<CustomZone>? customZones,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -289,6 +292,7 @@ class AppState {
         hrMin: hrMin ?? this.hrMin,
         brMax: brMax ?? this.brMax,
         brMin: brMin ?? this.brMin,
+        customZones: customZones ?? this.customZones,
       );
 }
 
@@ -588,6 +592,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void setHrMin(double v) => state = state.copyWith(hrMin: v);
   void setBrMax(double v) => state = state.copyWith(brMax: v);
   void setBrMin(double v) => state = state.copyWith(brMin: v);
+
+  void addZone(CustomZone zone) {
+    state = state.copyWith(customZones: [...state.customZones, zone]);
+  }
+
+  void removeZone(String id) {
+    state = state.copyWith(
+        customZones: state.customZones.where((z) => z.id != id).toList());
+  }
 
   void togglePause() {
     final paused = !state.isPaused;

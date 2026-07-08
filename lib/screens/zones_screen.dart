@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/models.dart';
 import '../services/ws_service.dart';
+import 'zone_editor_screen.dart';
 
 class ZonesScreen extends ConsumerWidget {
   const ZonesScreen({super.key});
@@ -10,6 +11,7 @@ class ZonesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
+    final notifier = ref.read(appStateProvider.notifier);
     final isConnected = state.connectionState.isConnected;
 
     if (!isConnected) {
@@ -23,63 +25,111 @@ class ZonesScreen extends ConsumerWidget {
 
     final personCount = u.estimatedPersons;
     final hasPeople = personCount > 0;
+    final zones = state.customZones;
 
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '区域概览',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade300,
-            ),
+          Row(
+            children: [
+              Text(
+                '区域概览',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade300,
+                ),
+              ),
+              const Spacer(),
+              FilledButton.tonalIcon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ZoneEditorScreen()),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('编辑区域'),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _ZoneCard(
-                    label: '监控区域',
-                    icon: Icons.home,
-                    occupied: hasPeople,
-                    personCount: personCount,
-                  ),
+          if (zones.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.map_outlined, size: 48, color: Colors.grey.shade600),
+                    const SizedBox(height: 8),
+                    Text('暂无自定义区域',
+                        style: TextStyle(color: Colors.grey.shade400)),
+                    const SizedBox(height: 4),
+                    Text('点击"编辑区域"开始划定',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: _ZoneCard(
-                          label: '周边区域',
-                          icon: Icons.yard,
-                          occupied: false,
-                          personCount: 0,
+              ),
+            )
+          else ...[
+            Expanded(
+              child: ListView.builder(
+                itemCount: zones.length,
+                itemBuilder: (context, i) {
+                  final zone = zones[i];
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor:
+                            hasPeople ? Colors.green.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.1),
+                        child: Icon(
+                          Icons.map,
+                          size: 18,
+                          color: hasPeople ? Colors.green : Colors.grey,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: _ZoneCard(
-                          label: '入口',
-                          icon: Icons.door_front_door,
-                          occupied: hasPeople,
-                          personCount: personCount,
-                        ),
+                      title: Text(zone.name,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text('${zone.points.length} 个顶点',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasPeople)
+                            Text('$personCount 人',
+                                style: const TextStyle(fontSize: 13, color: Colors.green)),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 18),
+                            onPressed: () => notifier.removeZone(zone.id),
+                            color: Colors.red.shade300,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                      onTap: () => _showZoneDetail(context, zone),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 12),
           _buildInfoRow(context, u),
+        ],
+      ),
+    );
+  }
+
+  void _showZoneDetail(BuildContext context, CustomZone zone) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(zone.name),
+        content: Text('顶点数: ${zone.points.length}\n点按查看详情'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
         ],
       ),
     );
@@ -121,62 +171,6 @@ class ZonesScreen extends ConsumerWidget {
         Text(value,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
       ],
-    );
-  }
-}
-
-class _ZoneCard extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool occupied;
-  final int personCount;
-
-  const _ZoneCard({
-    required this.label,
-    required this.icon,
-    required this.occupied,
-    required this.personCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints.expand(),
-      decoration: BoxDecoration(
-        color: occupied
-            ? Colors.green.withValues(alpha: 0.12)
-            : Colors.grey.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: occupied
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 32,
-            color: occupied ? Colors.green : Colors.grey,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            occupied ? '$personCount 人' : '空',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: occupied ? Colors.green : Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-          ),
-        ],
-      ),
     );
   }
 }
