@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/models.dart';
 import '../services/ws_service.dart';
 import 'debug_screen.dart';
 
@@ -178,28 +179,128 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildAlertsCard(AppStateNotifier notifier, AppState state) {
+    final recentAlerts = state.alerts.reversed.take(3).toList();
+
     return Card(
       child: Column(
         children: [
-          SwitchListTile(
+          ListTile(
+            leading: Badge(
+              isLabelVisible: state.unreadAlertCount > 0,
+              label: Text(state.unreadAlertCount.toString()),
+              child: const Icon(Icons.notifications_outlined),
+            ),
             title: const Text('告警日志'),
-            subtitle: Text('共 ${state.alerts.length} 条，未读 ${state.unreadAlertCount}',
+            subtitle: Text('共 ${state.alerts.length} 条',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-            value: true,
-            onChanged: (_) {},
-            secondary: const Icon(Icons.notifications_off_outlined),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('告警日志')),
+                        body: ListView.builder(
+                          itemCount: state.alerts.reversed.length,
+                          itemBuilder: (context, i) {
+                            final a = state.alerts.reversed.toList()[i];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: a.type == AlertType.presenceAppeared
+                                    ? Colors.green.withValues(alpha: 0.2)
+                                    : a.type == AlertType.presenceDisappeared
+                                        ? Colors.grey.withValues(alpha: 0.2)
+                                        : a.type == AlertType.signalLow
+                                            ? Colors.red.withValues(alpha: 0.2)
+                                            : Colors.orange.withValues(alpha: 0.2),
+                                child: Icon(
+                                  _alertIcon(a.type),
+                                  size: 14,
+                                  color: a.type == AlertType.presenceAppeared
+                                      ? Colors.green
+                                      : a.type == AlertType.signalLow
+                                          ? Colors.red
+                                          : Colors.grey,
+                                ),
+                              ),
+                              title: Text(a.type.label,
+                                  style: const TextStyle(fontSize: 14)),
+                              subtitle: Text(a.type.description,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500)),
+                              trailing: Text(
+                                '${a.time.hour.toString().padLeft(2, '0')}:${a.time.minute.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade600),
+                              ),
+                            );
+                          },
+                        ),
+                      )),
+            ),
           ),
-          if (state.alerts.isNotEmpty)
+          if (recentAlerts.isNotEmpty) ...[
+            const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-              child: FilledButton.tonal(
-                onPressed: () => notifier.clearAlerts(),
-                child: const Text('清空所有告警'),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: recentAlerts.map((a) {
+                  return Row(
+                    children: [
+                      Icon(_alertIcon(a.type), size: 12,
+                          color: a.type == AlertType.signalLow ? Colors.red : Colors.orange),
+                      const SizedBox(width: 6),
+                      Text(a.type.label, style: const TextStyle(fontSize: 12)),
+                      const Spacer(),
+                      Text(a.type.description,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
+          ],
+          if (state.alerts.isNotEmpty) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => notifier.markAlertsRead(),
+                    child: const Text('全部已读'),
+                  ),
+                  const SizedBox(width: 4),
+                  TextButton(
+                    onPressed: () => notifier.clearAlerts(),
+                    child: const Text('清空'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  IconData _alertIcon(AlertType type) {
+    switch (type) {
+      case AlertType.presenceAppeared:
+        return Icons.person_add;
+      case AlertType.presenceDisappeared:
+        return Icons.person_off;
+      case AlertType.motionStarted:
+        return Icons.directions_run;
+      case AlertType.motionStopped:
+        return Icons.airline_seat_flat;
+      case AlertType.personCountChanged:
+        return Icons.people;
+      case AlertType.signalLow:
+        return Icons.signal_cellular_alt;
+    }
   }
 
   Widget _buildPrivacyCard(AppStateNotifier notifier, AppState state) {
