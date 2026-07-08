@@ -27,7 +27,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final state = ref.watch(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
     final isConnected = state.connectionState.isConnected;
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('设置')),
@@ -160,12 +159,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _sectionHeader('外观'),
         const SizedBox(height: 8),
         Card(
-          child: SwitchListTile(
+          child:           SwitchListTile(
             title: const Text('暗色模式'),
             subtitle: const Text('切换深色/浅色主题'),
-            value: theme.brightness == Brightness.dark,
-            onChanged: (_) {},
-            secondary: const Icon(Icons.dark_mode_outlined),
+            value: state.isDarkMode,
+            onChanged: (_) => notifier.toggleTheme(),
+            secondary: Icon(
+              state.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              color: Colors.grey,
+            ),
           ),
         ),
         const SizedBox(height: 16),

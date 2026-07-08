@@ -202,6 +202,7 @@ class AppState {
   final List<VitalsRecord> vitalsHistory;
   final List<Alert> alerts;
   final int unreadAlertCount;
+  final bool isDarkMode;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -212,6 +213,7 @@ class AppState {
     this.vitalsHistory = const [],
     this.alerts = const [],
     this.unreadAlertCount = 0,
+    this.isDarkMode = true,
   });
 
   AppState copyWith({
@@ -223,6 +225,7 @@ class AppState {
     List<VitalsRecord>? vitalsHistory,
     List<Alert>? alerts,
     int? unreadAlertCount,
+    bool? isDarkMode,
   }) =>
       AppState(
         connectionState: connectionState ?? this.connectionState,
@@ -233,6 +236,7 @@ class AppState {
         vitalsHistory: vitalsHistory ?? this.vitalsHistory,
         alerts: alerts ?? this.alerts,
         unreadAlertCount: unreadAlertCount ?? this.unreadAlertCount,
+        isDarkMode: isDarkMode ?? this.isDarkMode,
       );
 }
 
@@ -430,6 +434,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void clearAlerts() {
     state = state.copyWith(alerts: [], unreadAlertCount: 0);
+  }
+
+  void toggleTheme() {
+    state = state.copyWith(isDarkMode: !state.isDarkMode);
   }
 
   @override
