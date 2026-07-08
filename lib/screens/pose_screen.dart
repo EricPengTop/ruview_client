@@ -40,7 +40,7 @@ class PoseScreen extends ConsumerWidget {
                   style: const TextStyle(fontSize: 12),
                 ),
                 selected: true,
-                onSelected: (_) {},
+                onSelected: (_) => _showDetail(context, p),
                 visualDensity: VisualDensity.compact,
               );
             },
@@ -59,6 +59,98 @@ class PoseScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showDetail(BuildContext context, PoseDetection person) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => _PoseDetailSheet(person: person),
+    );
+  }
+}
+
+class _PoseDetailSheet extends StatelessWidget {
+  final PoseDetection person;
+  const _PoseDetailSheet({required this.person});
+
+  static const _keypointNames = [
+    '鼻子', '左眼', '右眼', '左耳', '右耳',
+    '左肩', '右肩', '左肘', '右肘', '左腕',
+    '右腕', '左髋', '右髋', '左膝', '右膝',
+    '左踝', '右踝',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 32, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade600,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.person, size: 20),
+              const SizedBox(width: 8),
+              Text('目标 ${person.trackId}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Chip(
+                label: Text('${(person.confidence * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(fontSize: 11)),
+                backgroundColor: Colors.green.withValues(alpha: 0.15),
+                side: BorderSide.none,
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const Divider(),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: person.keypoints.length,
+              itemBuilder: (context, i) {
+                final kp = person.keypoints[i];
+                final name = i < _keypointNames.length ? _keypointNames[i] : '#$i';
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 36,
+                        child: Text(name,
+                            style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'x: ${kp.x.toStringAsFixed(0)}  y: ${kp.y.toStringAsFixed(0)}  z: ${kp.z.toStringAsFixed(1)}',
+                          style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                        ),
+                      ),
+                      Text(
+                        '${(kp.confidence * 100).toStringAsFixed(0)}%',
+                        style: TextStyle(fontSize: 11,
+                            color: kp.confidence > 0.5 ? Colors.green : Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

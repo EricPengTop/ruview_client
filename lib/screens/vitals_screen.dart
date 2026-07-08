@@ -118,6 +118,11 @@ class VitalsScreen extends ConsumerWidget {
           tooltip: '导出 CSV',
           onPressed: () => _exportCsv(context, history),
         ),
+        IconButton(
+          icon: const Icon(Icons.assessment, size: 18),
+          tooltip: '健康报告',
+          onPressed: () => _showReport(context, history),
+        ),
       ],
     );
   }
@@ -268,6 +273,44 @@ class VitalsScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+void _showReport(BuildContext context, List<VitalsRecord> history) {
+  if (history.isEmpty) return;
+  final hrVals = history.map((r) => r.heartRate).toList();
+  final brVals = history.map((r) => r.breathingRate).toList();
+  final avgHr = hrVals.reduce((a, b) => a + b) / hrVals.length;
+  final avgBr = brVals.reduce((a, b) => a + b) / brVals.length;
+  hrVals.sort();
+  brVals.sort();
+  final minHr = hrVals.first;
+  final maxHr = hrVals.last;
+  final minBr = brVals.first;
+  final maxBr = brVals.last;
+  final sigAvg = history.map((r) => r.signalQuality).reduce((a, b) => a + b) / history.length;
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('健康报告'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('样本: ${history.length} 帧'),
+          const Divider(),
+          Text('心率: 平均 ${avgHr.toStringAsFixed(1)} bpm'),
+          Text('　　   最低 ${minHr.toStringAsFixed(1)} / 最高 ${maxHr.toStringAsFixed(1)}'),
+          const Divider(),
+          Text('呼吸: 平均 ${avgBr.toStringAsFixed(1)} bpm'),
+          Text('　　   最低 ${minBr.toStringAsFixed(1)} / 最高 ${maxBr.toStringAsFixed(1)}'),
+          const Divider(),
+          Text('信号质量均值: ${(sigAvg * 100).toStringAsFixed(0)}%'),
+        ],
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭'))],
+    ),
+  );
 }
 
 Future<void> _exportCsv(BuildContext context, List<VitalsRecord> history) async {

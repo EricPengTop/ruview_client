@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,6 +39,11 @@ class SecurityScreen extends ConsumerWidget {
                 Expanded(child: _buildActionsPanel()),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 100,
+            child: _buildSignalChart(state.vitalsHistory),
           ),
         ],
       ),
@@ -256,5 +262,65 @@ class SecurityScreen extends ConsumerWidget {
       case AlertType.signalLow:
         return Colors.red;
     }
+  }
+
+  Widget _buildSignalChart(List<VitalsRecord> history) {
+    if (history.length < 2) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+        child: Row(
+          children: [
+            const RotatedBox(
+              quarterTurns: -1,
+              child: Text('信号质量',
+                  style: TextStyle(fontSize: 10, color: Colors.grey)),
+            ),
+            Expanded(
+              child: LineChart(
+                LineChartData(
+                  minY: 0,
+                  maxY: 1,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 0.25,
+                    getDrawingHorizontalLine: (v) =>
+                        FlLine(color: Colors.grey.shade800, strokeWidth: 0.5),
+                  ),
+                  titlesData: const FlTitlesData(
+                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineTouchData: const LineTouchData(enabled: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: history
+                          .asMap()
+                          .entries
+                          .map((e) => FlSpot(
+                              e.key.toDouble(), e.value.signalQuality))
+                          .toList(),
+                      isCurved: true,
+                      color: Colors.amber,
+                      barWidth: 1.5,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: Colors.amber.withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

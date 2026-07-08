@@ -185,6 +185,7 @@ class VitalsRecord {
   final double breathingRate;
   final double hrConfidence;
   final double brConfidence;
+  final double signalQuality;
 
   const VitalsRecord({
     required this.time,
@@ -192,6 +193,7 @@ class VitalsRecord {
     required this.breathingRate,
     required this.hrConfidence,
     required this.brConfidence,
+    required this.signalQuality,
   });
 }
 
@@ -361,6 +363,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
             breathingRate: br,
             hrConfidence: hrConf,
             brConfidence: brConf,
+            signalQuality: signalQ,
           ),
         ];
         if (history.length > 60) {
