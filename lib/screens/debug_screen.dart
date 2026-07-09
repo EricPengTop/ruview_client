@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_locale.dart';
@@ -20,6 +19,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   final _portController = TextEditingController(text: '3001');
   bool _paused = false;
   bool _isAutoScroll = false;
+  double _lastUserPixel = 0;
 
   @override
   void dispose() {
@@ -84,17 +84,18 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   }
 
   void _onUserScroll(ScrollNotification notif) {
-    if (_isAutoScroll || notif is! UserScrollNotification) return;
-    if (notif.direction == ScrollDirection.forward) {
-      // 向上滑 → 暂停
-      setState(() => _paused = true);
-    } else if (notif.direction == ScrollDirection.reverse) {
-      // 向下滑 → 恢复
-      setState(() => _paused = false);
-    } else if (notif.direction == ScrollDirection.idle) {
+    if (_isAutoScroll) return;
+
+    if (notif is ScrollUpdateNotification && notif.dragDetails != null) {
+      final pos = _scrollController.position;
+      final goingDown = pos.pixels > _lastUserPixel;
+      _lastUserPixel = pos.pixels;
+      setState(() => _paused = !goingDown);
+    } else if (notif is ScrollEndNotification && notif.dragDetails != null) {
       final pos = _scrollController.position;
       if (pos.pixels >= pos.maxScrollExtent - 5) {
         setState(() => _paused = false);
+        _lastUserPixel = pos.pixels;
       }
     }
   }
