@@ -582,8 +582,11 @@ Future<String?> _scanNetwork(BuildContext context, AppStrings s) async {
       final ip = '$subnet.$i';
       futures.add(Future(() async {
         try {
-          final socket = await Socket.connect(ip, 3000, timeout: const Duration(milliseconds: 300));
+          final socket = await Socket.connect(ip, 3000, timeout: const Duration(milliseconds: 200));
           socket.destroy();
+          // Verify port 3001 (WebSocket) is also available
+          final ws = await Socket.connect(ip, 3001, timeout: const Duration(milliseconds: 200));
+          ws.destroy();
           found.add(ip);
         } catch (_) {}
       }));
