@@ -14,6 +14,19 @@ void main() async {
   runApp(const ProviderScope(child: RuViewApp()));
 }
 
+/// macOS/桌面端鼠标拖动滚动行为
+class DesktopScrollBehavior extends MaterialScrollBehavior {
+  const DesktopScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.touch,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.trackpad,
+      };
+}
+
 /// 应用根组件 (主题/路由/Provider)
 class RuViewApp extends ConsumerWidget {
   const RuViewApp({super.key});
@@ -24,9 +37,7 @@ class RuViewApp extends ConsumerWidget {
     final s = ref.watch(appStringsProvider);
 
     return ScrollConfiguration(
-      behavior: const ScrollBehavior().copyWith(
-        dragDevices: {PointerDeviceKind.mouse, PointerDeviceKind.touch, PointerDeviceKind.trackpad},
-      ),
+      behavior: const DesktopScrollBehavior(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: s.getString('app_title'),
