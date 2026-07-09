@@ -38,7 +38,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
             final pos = _scrollController.position;
-            if (pos.pixels >= pos.maxScrollExtent - pos.viewportDimension) {
+            if (pos.pixels >= pos.maxScrollExtent - 100) {
               _scrollController.jumpTo(pos.maxScrollExtent);
             }
           }
