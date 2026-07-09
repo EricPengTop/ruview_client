@@ -36,16 +36,14 @@ class RuViewApp extends ConsumerWidget {
     final isDark = ref.watch(appStateProvider.select((s) => s.isDarkMode));
     final s = ref.watch(appStringsProvider);
 
-    return ScrollConfiguration(
-      behavior: const DesktopScrollBehavior(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: s.getString('app_title'),
-        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-        darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.dark),
-        theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.light),
-        home: const HomeScreen(),
-      ),
+    return MaterialApp(
+      scrollBehavior: const DesktopScrollBehavior(),
+      debugShowCheckedModeBanner: false,
+      title: s.getString('app_title'),
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.dark),
+      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.light),
+      home: const HomeScreen(),
     );
   }
 }
