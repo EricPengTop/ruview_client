@@ -82,14 +82,13 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
 
   void _onUserScroll(ScrollNotification notif) {
     if (notif is! UserScrollNotification) return;
-    if (notif.direction == ScrollDirection.reverse) {
-      // 向下滑动 → 暂停
+    if (notif.direction == ScrollDirection.forward) {
+      // 向上滑 → 暂停
       setState(() => _paused = true);
-    } else if (notif.direction == ScrollDirection.forward) {
-      // 向上滑动 → 恢复
+    } else if (notif.direction == ScrollDirection.reverse) {
+      // 向下滑 → 恢复
       setState(() => _paused = false);
     } else if (notif.direction == ScrollDirection.idle) {
-      // 滚动停止, 如果在底部则恢复
       final pos = _scrollController.position;
       if (pos.pixels >= pos.maxScrollExtent - 5) {
         setState(() => _paused = false);
