@@ -162,7 +162,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _scanNetwork(context, s),
+                      onPressed: () async {
+                        final ip = await _scanNetwork(context, s);
+                        if (ip != null && mounted) {
+                          setState(() => _hostController.text = ip);
+                        }
+                      },
                       icon: const Icon(Icons.wifi_find, size: 16),
                       label: Text(s.getString('srv_scan_net')),
                     ),
@@ -541,10 +546,91 @@ Future<void> _scanLocalhost(BuildContext context, AppStrings s) async {
   }
 }
 
-Future<void> _scanNetwork(BuildContext context, AppStrings s) async {
-  if (context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(s.getString('srv_scan_manual'))));
+Future<String?> _scanNetwork(BuildContext context, AppStrings s) async {
+  // Show progress dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const AlertDialog(
+      content: Row(children: [
+        SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+        SizedBox(width: 16),
+        Text('扫描中...'),
+      ]),
+    ),
+  );
+
+  // Get local subnet
+  String? subnet;
+  try {
+    for (final iface in await NetworkInterface.list()) {
+      for (final addr in iface.addresses) {
+        if (addr.type == InternetAddressType.IPv4 && !addr.address.startsWith('127.')) {
+          final parts = addr.address.split('.');
+          subnet = '${parts[0]}.${parts[1]}.${parts[2]}';
+          break;
+        }
+      }
+      if (subnet != null) break;
+    }
+  } catch (_) {}
+
+  final found = <String>[];
+  if (subnet != null) {
+    final futures = <Future<void>>[];
+    for (int i = 1; i <= 254; i++) {
+      final ip = '$subnet.$i';
+      futures.add(Future(() async {
+        try {
+          final socket = await Socket.connect(ip, 3000, timeout: const Duration(milliseconds: 300));
+          socket.destroy();
+          found.add(ip);
+        } catch (_) {}
+      }));
+    }
+    await Future.wait(futures);
   }
-}
+
+  if (context.mounted) {
+        Navigator.pop(context); // close progress
+        if (found.isEmpty) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('未发现 RuView 设备')),
+            );
+          }
+          return null;
+        }
+        final selected = await showDialog<String>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text(s.getString('srv_scan_found')),
+            content: SizedBox(
+              width: 280,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...found.map((ip) => ListTile(
+                        leading: const Icon(Icons.devices),
+                        title: Text(ip, style: const TextStyle(fontSize: 14)),
+                        trailing: const Icon(Icons.chevron_right, size: 16),
+                        dense: true,
+                        onTap: () => Navigator.pop(context, ip),
+                      )),
+                  const Divider(),
+                  Text('共发现 ${found.length} 台设备', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(s.getString('vitals_close')),
+              ),
+            ],
+          ),
+        );
+        return selected;
+      }
+    return null;
+  }
