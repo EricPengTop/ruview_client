@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,7 +21,15 @@ class RuViewApp extends ConsumerWidget {
     final isDark = ref.watch(appStateProvider.select((s) => s.isDarkMode));
     final s = ref.watch(appStringsProvider);
 
-    return MaterialApp(
+    return ScrollConfiguration(
+      behavior: const ScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+      child: MaterialApp(
       debugShowCheckedModeBanner: false,
       title: s.getString('app_title'),
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
@@ -35,6 +44,7 @@ class RuViewApp extends ConsumerWidget {
         brightness: Brightness.light,
       ),
       home: const HomeScreen(),
+      ),
     );
   }
 }
