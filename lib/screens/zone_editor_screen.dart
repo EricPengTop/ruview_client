@@ -262,7 +262,7 @@ class _RoomPainter extends CustomPainter {
     for (int row = 0; row < field.height; row++) {
       for (int col = 0; col < field.width; col++) {
         final val = field.valueAt(col, row);
-        final paint = Paint()..color = _heatColor(val).withValues(alpha: 0.5);
+        final paint = Paint()..color = _heatColor(val).withValues(alpha: 0.75);
         canvas.drawRect(Rect.fromLTWH(col * cellW, (field.height - 1 - row) * cellH, cellW, cellH), paint);
       }
     }
