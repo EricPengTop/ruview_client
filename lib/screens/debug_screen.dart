@@ -32,15 +32,14 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     final s = ref.watch(appStringsProvider);
     final isConnected = state.connectionState.isConnected;
 
-    if (state.log.isNotEmpty && _scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Only auto-scroll if user is near the bottom (within 50px)
+    ref.listen(appStateProvider, (prev, next) {
+      if (next.log.isNotEmpty && _scrollController.hasClients) {
         final pos = _scrollController.position;
         if (pos.pixels >= pos.maxScrollExtent - 50) {
           _scrollController.jumpTo(pos.maxScrollExtent);
         }
-      });
-    }
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(

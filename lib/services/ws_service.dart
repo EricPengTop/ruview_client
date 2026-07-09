@@ -275,7 +275,7 @@ class AppState {
     connectionState: connectionState ?? this.connectionState,
     latestUpdate: latestUpdate ?? this.latestUpdate,
     log: log ?? this.log,
-    lastError: lastError,
+        lastError: lastError ?? this.lastError,
     msgCount: msgCount ?? this.msgCount,
     vitalsHistory: vitalsHistory ?? this.vitalsHistory,
     alerts: alerts ?? this.alerts,
@@ -402,10 +402,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
             ? state.pausedIndex
             : history.length - 1;
 
+        final newLog = [...state.log, line];
+        if (newLog.length > 500) {
+          newLog.removeRange(0, newLog.length - 500);
+        }
+
         state = state.copyWith(
           latestUpdate: u,
           msgCount: count,
-          log: [...state.log, line],
+          log: newLog,
           vitalsHistory: state.isPaused ? null : history,
           alerts: totalAlerts,
           unreadAlertCount: state.currentTabIndex == 4
@@ -589,9 +594,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final occupied = <String>[];
     for (final zone in zones) {
       for (final person in persons) {
-        // Map 3D position (meters) to approximate 2D screen coordinates
-        final px = person.posX * 100 + 200;
-        final py = person.posY * 100 + 250;
+        // Map 3D position (meters) to same coordinate system as zone editor
+        final px = person.posX * 50 + 200;
+        final py = person.posY * 50 + 200;
         if (_isPointInPolygon(Offset(px, py), zone.points)) {
           occupied.add(zone.id);
           break;

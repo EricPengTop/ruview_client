@@ -44,7 +44,7 @@ class SignalField {
   }
 
   int get width => gridSize.isNotEmpty ? gridSize[0] : 20;
-  int get height => gridSize.length > 2 ? gridSize[2] : 20;
+  int get height => gridSize.length > 1 ? gridSize[1] : 20;
 
   double valueAt(int x, int y) {
     if (values.isEmpty) return 0;
