@@ -198,7 +198,8 @@ class SecurityScreen extends ConsumerWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -239,13 +240,14 @@ class SecurityScreen extends ConsumerWidget {
               s.getString('sec_action_contact'),
               Colors.blue,
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             FilledButton.tonalIcon(
               onPressed: () {},
               icon: const Icon(Icons.download, size: 16),
               label: Text(s.getString('sec_action_export')),
             ),
           ],
+        ),
         ),
       ),
     );

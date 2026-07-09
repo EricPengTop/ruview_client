@@ -35,6 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     (AppStrings s) => s.getString('tab_overview'),
     (AppStrings s) => s.getString('tab_pose'),
     (AppStrings s) => s.getString('tab_zones'),
+    (AppStrings s) => s.getString('tab_alerts'),
     (AppStrings s) => s.getString('tab_security_full'),
   ];
 
@@ -67,6 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) {
           setState(() => _currentIndex = i);
+          notifier.setTabIndex(i);
           if (i == 4) notifier.markAlertsRead();
         },
         destinations: [

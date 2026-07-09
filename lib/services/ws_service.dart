@@ -224,6 +224,7 @@ class AppState {
   final List<CustomZone> customZones;
   final List<String> occupiedZoneIds;
   final String locale;
+  final int currentTabIndex;
 
   const AppState({
     this.connectionState = WsConnectionState.disconnected,
@@ -245,6 +246,7 @@ class AppState {
     this.customZones = const [],
     this.occupiedZoneIds = const [],
     this.locale = 'zh',
+    this.currentTabIndex = 0,
   });
 
   AppState copyWith({
@@ -267,6 +269,7 @@ class AppState {
     List<CustomZone>? customZones,
     List<String>? occupiedZoneIds,
     String? locale,
+    int? currentTabIndex,
   }) => AppState(
     connectionState: connectionState ?? this.connectionState,
     latestUpdate: latestUpdate ?? this.latestUpdate,
@@ -287,6 +290,7 @@ class AppState {
         customZones: customZones ?? this.customZones,
         occupiedZoneIds: occupiedZoneIds ?? this.occupiedZoneIds,
         locale: locale ?? this.locale,
+        currentTabIndex: currentTabIndex ?? this.currentTabIndex,
   );
 }
 
@@ -400,7 +404,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
           log: [...state.log, line],
           vitalsHistory: state.isPaused ? null : history,
           alerts: totalAlerts,
-          unreadAlertCount: state.unreadAlertCount + newAlerts.length,
+          unreadAlertCount: state.currentTabIndex == 4
+              ? state.unreadAlertCount
+              : state.unreadAlertCount + newAlerts.length,
           pausedIndex: pausedIndex,
         );
 
@@ -628,6 +634,10 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void toggleLocale() {
     state = state.copyWith(locale: state.locale == 'zh' ? 'en' : 'zh');
+  }
+
+  void setTabIndex(int index) {
+    state = state.copyWith(currentTabIndex: index);
   }
 
   void togglePause() {
