@@ -399,8 +399,12 @@ Future<void> _exportCsv(
       .replaceAll(':', '-')
       .replaceAll('.', '-')
       .substring(0, 19);
-  final home = Platform.environment['HOME'] ?? '.';
-  final path = '$home/Downloads/ruview_$ts.csv';
+  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+  final dir = Directory('$home/Downloads');
+  if (!await dir.exists()) {
+    await dir.create(recursive: true);
+  }
+  final path = '${dir.path}/ruview_$ts.csv';
   final buf = StringBuffer()..writeln(s.getString('vitals_csv_header'));
   for (final r in history) {
     buf.writeln(

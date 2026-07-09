@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../l10n/app_locale.dart';
-import '../services/notification_service.dart';
-import '../services/ws_service.dart';
+import 'l10n/app_locale.dart';
+import 'services/notification_service.dart';
+import 'services/ws_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {

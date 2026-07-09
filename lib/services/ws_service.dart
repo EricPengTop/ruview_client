@@ -407,6 +407,13 @@ class AppStateNotifier extends StateNotifier<AppState> {
           newLog.removeRange(0, newLog.length - 500);
         }
 
+        // Compute custom zone occupancy before state update
+        List<String> occupiedIds = state.occupiedZoneIds;
+        if (state.customZones.isNotEmpty && u.persons.isNotEmpty) {
+          final ids = _computeOccupiedZones(state.customZones, u.persons);
+          if (ids.isNotEmpty) occupiedIds = ids;
+        }
+
         state = state.copyWith(
           latestUpdate: u,
           msgCount: count,
@@ -417,6 +424,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
               ? state.unreadAlertCount
               : state.unreadAlertCount + newAlerts.length,
           pausedIndex: pausedIndex,
+          occupiedZoneIds: occupiedIds,
         );
 
         for (final alert in newAlerts) {
@@ -429,15 +437,6 @@ class AppStateNotifier extends StateNotifier<AppState> {
               alert.type == AlertType.hrHigh ||
               alert.type == AlertType.brLow) {
             NotificationService.show(alert.type.label, alert.type.description);
-          }
-        }
-
-        // Compute custom zone occupancy
-        if (state.customZones.isNotEmpty && u.persons.isNotEmpty) {
-          final occupiedIds = _computeOccupiedZones(
-              state.customZones, u.persons);
-          if (occupiedIds.isNotEmpty) {
-            state = state.copyWith(occupiedZoneIds: occupiedIds);
           }
         }
       }

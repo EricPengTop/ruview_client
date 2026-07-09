@@ -59,7 +59,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: Text(s.getString('z_editor_cancel'))),
           FilledButton(onPressed: () {
             final name = _nameController.text.isEmpty ? '${s.getString("z_editor_default_name")}${Random().nextInt(100)}' : _nameController.text;
-            ref.read(appStateProvider.notifier).addZone(CustomZone(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
+            ref.read(appStateProvider.notifier).addZone(CustomZone(                    id: DateTime.now().microsecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
             _nameController.clear(); _points.clear(); _draggingIndex = null;
             Navigator.pop(context); setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.format('z_editor_saved', args: {'name': name}))));
@@ -129,10 +129,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
                   setState(() => _points[_draggingIndex!] = d.localPosition);
                 }
               },
-              onPanEnd: (_) {
-                setState(() => _draggingIndex = null);
-              },
-              onTap: () {}, // absorb taps, add via long press or explicit add button
+              onPanEnd: (_) => setState(() => _draggingIndex = null),
               onDoubleTapDown: (d) {
                 final near = _findNearVertex(d.localPosition);
                 if (near != null) {

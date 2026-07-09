@@ -33,11 +33,15 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     final isConnected = state.connectionState.isConnected;
 
     ref.listen(appStateProvider, (prev, next) {
-      if (next.log.isNotEmpty && _scrollController.hasClients) {
-        final pos = _scrollController.position;
-        if (pos.pixels >= pos.maxScrollExtent - 50) {
-          _scrollController.jumpTo(pos.maxScrollExtent);
-        }
+      if (next.log.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            final pos = _scrollController.position;
+            if (pos.pixels >= pos.maxScrollExtent - 50) {
+              _scrollController.jumpTo(pos.maxScrollExtent);
+            }
+          }
+        });
       }
     });
 
