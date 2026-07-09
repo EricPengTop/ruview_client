@@ -315,9 +315,14 @@ class SecurityScreen extends ConsumerWidget {
                     getDrawingHorizontalLine: (v) =>
                         FlLine(color: Colors.grey.shade800, strokeWidth: 0.5),
                   ),
-                  titlesData: const FlTitlesData(
+                  titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        interval: 0.25,
+                        getTitlesWidget: _signalYTitles,
+                      ),
                     ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
@@ -357,6 +362,13 @@ class SecurityScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  static Widget _signalYTitles(double v, TitleMeta meta) {
+    return Text(
+      '${(v * 100).toInt()}%',
+      style: const TextStyle(fontSize: 9, color: Colors.grey),
     );
   }
 }
