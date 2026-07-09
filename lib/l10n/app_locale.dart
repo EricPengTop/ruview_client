@@ -86,12 +86,6 @@ class AppStrings {
     'privacy_enabled': '隐私模式已启用',
     'privacy_hidden': '心率/呼吸率数据已隐藏',
 
-    'mqtt': 'MQTT 语义状态',
-    'mqtt_connect': 'MQTT 连接',
-    'mqtt_enabled': '已连接',
-    'mqtt_disabled': '未启用',
-    'mqtt_host': 'MQTT 主机',
-
     'appearance': '外观',
     'dark_mode': '暗色模式',
     'dark_mode_desc': '切换深色/浅色主题',
@@ -296,11 +290,6 @@ class AppStrings {
     'privacy_enabled': 'Privacy Mode Enabled',
     'privacy_hidden': 'Heart rate / breathing rate hidden',
 
-    'mqtt': 'MQTT Semantic',
-    'mqtt_connect': 'MQTT Connection',
-    'mqtt_enabled': 'Connected',
-    'mqtt_disabled': 'Disabled',
-    'mqtt_host': 'MQTT Host',
 
     'appearance': 'Appearance',
     'dark_mode': 'Dark Mode',

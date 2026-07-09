@@ -50,8 +50,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildAlertRules(notifier, state, s),
           _section(s.getString('privacy')),
           _buildPrivacyCard(notifier, state, s),
-          _section(s.getString('mqtt')),
-          _buildMqttCard(notifier, state, s),
           _section(s.getString('appearance')),
           _buildThemeCard(notifier, state, s),
           _section(s.getString('language')),
@@ -375,68 +373,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           st.isPrivacyMode ? Icons.visibility_off : Icons.visibility,
           color: Colors.grey,
         ),
-      ),
-    );
-  }
-
-  Widget _buildMqttCard(AppStateNotifier n, AppState st, AppStrings s) {
-    return Card(
-      child: Column(
-        children: [
-          SwitchListTile(
-            title: Text(s.getString('mqtt_connect')),
-            subtitle: Text(
-              st.mqttConnected
-                  ? s.getString('mqtt_enabled')
-                  : s.getString('mqtt_disabled'),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-            ),
-            value: st.mqttEnabled,
-            onChanged: (_) => n.toggleMqtt(),
-            secondary: Icon(
-              st.mqttConnected ? Icons.cloud_done : Icons.cloud_off,
-              color: st.mqttConnected ? Colors.green : Colors.grey,
-            ),
-          ),
-          if (!st.mqttConnected) ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: s.getString('mqtt_host'),
-                        border: const OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      controller: TextEditingController(text: st.mqttHost),
-                      onChanged: n.updateMqttHost,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 80,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: s.getString('srv_port'),
-                        border: const OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      controller: TextEditingController(text: '${st.mqttPort}'),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) {
-                        final p = int.tryParse(v);
-                        if (p != null) n.updateMqttPort(p);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
