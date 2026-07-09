@@ -158,9 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             isConnected ? s.getString('disconnect') : s.getString('connect'),
           ),
           style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           ),
         ),
       ],
