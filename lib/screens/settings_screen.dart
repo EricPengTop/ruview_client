@@ -562,10 +562,12 @@ Future<String?> _scanNetwork(BuildContext context, AppStrings s) async {
 
   // Get local subnet
   String? subnet;
+  String? localIp;
   try {
     for (final iface in await NetworkInterface.list()) {
       for (final addr in iface.addresses) {
         if (addr.type == InternetAddressType.IPv4 && !addr.address.startsWith('127.')) {
+          localIp = addr.address;
           final parts = addr.address.split('.');
           subnet = '${parts[0]}.${parts[1]}.${parts[2]}';
           break;
@@ -580,6 +582,7 @@ Future<String?> _scanNetwork(BuildContext context, AppStrings s) async {
     final futures = <Future<void>>[];
     for (int i = 1; i <= 254; i++) {
       final ip = '$subnet.$i';
+      if (ip == localIp) continue;
       futures.add(Future(() async {
         try {
           final socket = await Socket.connect(ip, 3000, timeout: const Duration(milliseconds: 200));
