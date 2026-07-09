@@ -34,11 +34,11 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
 
     if (state.log.isNotEmpty && _scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        );
+        // Only auto-scroll if user is near the bottom (within 50px)
+        final pos = _scrollController.position;
+        if (pos.pixels >= pos.maxScrollExtent - 50) {
+          _scrollController.jumpTo(pos.maxScrollExtent);
+        }
       });
     }
 
