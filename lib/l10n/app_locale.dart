@@ -220,6 +220,13 @@ class AppStrings {
     'debug_title': 'RuView 调试',
     'debug_clear_log': '清空日志',
     'debug_no_messages': '暂无消息，点击连接开始',
+    'z_editor_dragging': '拖拽顶点{index}...',
+    'z_editor_hint_normal': '双击添加  按住拖动  共{count}个顶点',
+    'z_editor_detecting': '检测 {count} 人',
+    'z_editor_sensor_count': '传感器 {count}',
+    'z_editor_signal_weak': '信号弱',
+    'z_editor_signal_strong': '信号强',
+    'z_editor_sensor_label': '传感器',
   };
 
   static const _en = {
@@ -415,6 +422,13 @@ class AppStrings {
     'debug_title': 'RuView Debug',
     'debug_clear_log': 'Clear Log',
     'debug_no_messages': 'No messages. Tap Connect.',
+    'z_editor_dragging': 'Moving vertex {index}...',
+    'z_editor_hint_normal': 'Double-tap to add  Drag to move  {count} vertices',
+    'z_editor_detecting': '{count} person(s) detected',
+    'z_editor_sensor_count': '{count} sensor(s)',
+    'z_editor_signal_weak': 'Weak',
+    'z_editor_signal_strong': 'Strong',
+    'z_editor_sensor_label': 'Sensor',
   };
 
   String getString(String key) {

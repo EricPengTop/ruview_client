@@ -90,15 +90,17 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           child: Row(children: [
             Icon(Icons.touch_app, size: 14, color: Colors.grey.shade400), const SizedBox(width: 6),
             Text(
-              _draggingIndex != null ? '拖拽顶点${_draggingIndex! + 1}...' : '双击添加  按住拖动  共${_points.length}个顶点',
+              _draggingIndex != null
+                  ? s.format('z_editor_dragging', args: {'index': '${_draggingIndex! + 1}'})
+                  : s.format('z_editor_hint_normal', args: {'count': '${_points.length}'}),
               style: TextStyle(fontSize: 12, color: _draggingIndex != null ? Colors.yellow : Colors.grey.shade400),
             ),
             const Spacer(),
-            _infoChip(isConnected ? '检测 ${persons.length} 人' : '未连接', isConnected ? Colors.green : Colors.grey),
+            _infoChip(isConnected ? s.format('z_editor_detecting', args: {'count': '${persons.length}'}) : s.getString('not_connected_msg'), isConnected ? Colors.green : Colors.grey),
             const SizedBox(width: 6),
-            if (nodes.isNotEmpty) _infoChip('传感器 ${nodes.length}', Colors.blue),
+            if (nodes.isNotEmpty) _infoChip(s.format('z_editor_sensor_count', args: {'count': '${nodes.length}'}), Colors.blue),
             const SizedBox(width: 6),
-            if (_points.length >= 3) _infoChip('可闭合', Colors.green.shade300),
+            if (_points.length >= 3) _infoChip(s.getString('z_editor_closable'), Colors.green.shade300),
           ]),
         ),
         Expanded(
@@ -137,7 +139,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
                     },
                     child: CustomPaint(
                       size: canvasSize,
-                      painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex),
+                      painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex, sensorLabelPrefix: s.getString('z_editor_sensor_label')),
                     ),
                   ),
                 ),
@@ -150,11 +152,11 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Row(children: [
-            Text('信号弱', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+            Text(s.getString('z_editor_signal_weak'), style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
             const SizedBox(width: 4),
             Expanded(child: _buildLegendGradient()),
             const SizedBox(width: 4),
-            Text('信号强', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+            Text(s.getString('z_editor_signal_strong'), style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
           ]),
         ),
       ]),
@@ -184,8 +186,9 @@ class _RoomPainter extends CustomPainter {
   final List<_SensorDot> sensors;
   final SignalField? signalField;
   final int? draggingIndex;
+  final String? sensorLabelPrefix;
 
-  _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField, this.draggingIndex});
+  _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField, this.draggingIndex, this.sensorLabelPrefix});
 
   static Color _heatColor(double t) {
     if (t <= 0) return const Color(0xFF1a237e);
@@ -261,7 +264,8 @@ class _RoomPainter extends CustomPainter {
       canvas.drawRect(rect, fill);
       canvas.drawRect(rect, border);
       canvas.restore();
-      final tp = TextPainter(text: TextSpan(text: '传感器${s.id}', style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.w600)), textDirection: TextDirection.ltr);
+      final label = sensorLabelPrefix != null ? '$sensorLabelPrefix${s.id}' : '${s.id}';
+      final tp = TextPainter(text: TextSpan(text: label, style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.w600)), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, s.pos + const Offset(10, -18));
     }
