@@ -7,13 +7,14 @@ import 'services/notification_service.dart';
 import 'services/ws_service.dart';
 import 'screens/home_screen.dart';
 
+/// RuView WiFi 感知 Flutter 客户端入口
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
   runApp(const ProviderScope(child: RuViewApp()));
 }
 
-/// RuView WiFi 感知 Flutter 客户端入口
+/// 应用根组件 (主题/路由/Provider)
 class RuViewApp extends ConsumerWidget {
   const RuViewApp({super.key});
 
@@ -24,27 +25,15 @@ class RuViewApp extends ConsumerWidget {
 
     return ScrollConfiguration(
       behavior: const ScrollBehavior().copyWith(
-        dragDevices: {
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.touch,
-          PointerDeviceKind.trackpad,
-        },
+        dragDevices: {PointerDeviceKind.mouse, PointerDeviceKind.touch, PointerDeviceKind.trackpad},
       ),
       child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: s.getString('app_title'),
-      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      darkTheme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
-      theme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      home: const HomeScreen(),
+        debugShowCheckedModeBanner: false,
+        title: s.getString('app_title'),
+        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+        darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.dark),
+        theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.light),
+        home: const HomeScreen(),
       ),
     );
   }
