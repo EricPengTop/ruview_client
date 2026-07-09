@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_locale.dart';
@@ -17,6 +18,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   final _scrollController = ScrollController();
   final _hostController = TextEditingController(text: 'localhost');
   final _portController = TextEditingController(text: '3001');
+  bool _paused = false;
 
   @override
   void dispose() {
@@ -34,13 +36,10 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     final isConnected = state.connectionState.isConnected;
 
     ref.listen(appStateProvider, (prev, next) {
-      if (next.log.isNotEmpty) {
+      if (next.log.isNotEmpty && !_paused) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            final pos = _scrollController.position;
-            if (pos.pixels >= pos.maxScrollExtent - 5) {
-              _scrollController.jumpTo(pos.maxScrollExtent);
-            }
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
           }
         });
       }
@@ -81,6 +80,23 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     );
   }
 
+  void _onUserScroll(ScrollNotification notif) {
+    if (notif is! UserScrollNotification) return;
+    if (notif.direction == ScrollDirection.reverse) {
+      // 向下滑动 → 暂停
+      setState(() => _paused = true);
+    } else if (notif.direction == ScrollDirection.forward) {
+      // 向上滑动 → 恢复
+      setState(() => _paused = false);
+    } else if (notif.direction == ScrollDirection.idle) {
+      // 滚动停止, 如果在底部则恢复
+      final pos = _scrollController.position;
+      if (pos.pixels >= pos.maxScrollExtent - 5) {
+        setState(() => _paused = false);
+      }
+    }
+  }
+
   Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -110,14 +126,9 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: TextField(controller: _hostController, enabled: !isConnected, decoration: InputDecoration(labelText: s.getString('srv_host'), border: const OutlineInputBorder(), isDense: true)),
-          ),
+          Expanded(flex: 2, child: TextField(controller: _hostController, enabled: !isConnected, decoration: InputDecoration(labelText: s.getString('srv_host'), border: const OutlineInputBorder(), isDense: true))),
           const SizedBox(width: 8),
-          Expanded(
-            child: TextField(controller: _portController, enabled: !isConnected, decoration: InputDecoration(labelText: s.getString('srv_port'), border: const OutlineInputBorder(), isDense: true), keyboardType: TextInputType.number),
-          ),
+          Expanded(child: TextField(controller: _portController, enabled: !isConnected, decoration: InputDecoration(labelText: s.getString('srv_port'), border: const OutlineInputBorder(), isDense: true), keyboardType: TextInputType.number)),
         ],
       ),
     );
@@ -158,26 +169,32 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   Widget _buildLogView(List<String> log, AppStrings s) {
     if (log.isEmpty) return Center(child: Text(s.getString('debug_no_messages')));
 
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: log.length,
-      itemBuilder: (context, i) {
-        final entry = log[i];
-        final isError = entry.contains('错误:');
-        final isConnected = entry.contains('连接状态: 已连接');
-        Color? textColor;
-        if (isError) {
-          textColor = Colors.red.shade300;
-        } else if (isConnected) {
-          textColor = Colors.green.shade300;
-        } else if (entry.contains('连接状态:')) {
-          textColor = Colors.orange.shade300;
-        }
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
-        );
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notif) {
+        _onUserScroll(notif);
+        return false;
       },
+      child: ListView.builder(
+        controller: _scrollController,
+        itemCount: log.length,
+        itemBuilder: (context, i) {
+          final entry = log[i];
+          final isError = entry.contains('错误:');
+          final isConnected = entry.contains('连接状态: 已连接');
+          Color? textColor;
+          if (isError) {
+            textColor = Colors.red.shade300;
+          } else if (isConnected) {
+            textColor = Colors.green.shade300;
+          } else if (entry.contains('连接状态:')) {
+            textColor = Colors.orange.shade300;
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
+          );
+        },
+      ),
     );
   }
 }
