@@ -410,8 +410,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
         // Compute custom zone occupancy before state update
         List<String> occupiedIds = state.occupiedZoneIds;
         if (state.customZones.isNotEmpty && u.persons.isNotEmpty) {
-          final ids = _computeOccupiedZones(state.customZones, u.persons);
-          if (ids.isNotEmpty) occupiedIds = ids;
+          occupiedIds = _computeOccupiedZones(state.customZones, u.persons);
+        } else {
+          occupiedIds = const [];
         }
 
         state = state.copyWith(

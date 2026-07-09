@@ -98,7 +98,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           child: Row(children: [
             Icon(Icons.touch_app, size: 14, color: Colors.grey.shade400), const SizedBox(width: 6),
             Text(
-              _draggingIndex != null ? '拖拽顶点${_draggingIndex! + 1}...' : '双击添加  拖拽移动  共${_points.length}个顶点',
+              _draggingIndex != null ? '拖拽顶点${_draggingIndex! + 1}...' : '双击添加  按住拖动  共${_points.length}个顶点',
               style: TextStyle(fontSize: 12, color: _draggingIndex != null ? Colors.yellow : Colors.grey.shade400),
             ),
             const Spacer(),
@@ -114,29 +114,23 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
             child: InteractiveViewer(
             minScale: 0.5, maxScale: 3.0,
             panEnabled: _draggingIndex == null,
-            child: GestureDetector(
-              onTapUp: (d) {
-                // Don't add if tapped near an existing vertex (let pan handle that)
-              },
-              onPanStart: (d) {
+            child: Listener(
+              onPointerDown: (d) {
                 final near = _findNearVertex(d.localPosition);
-                if (near != null) {
-                  _startDrag(near);
-                }
+                if (near != null) _startDrag(near);
               },
-              onPanUpdate: (d) {
+              onPointerMove: (d) {
                 if (_draggingIndex != null) {
                   setState(() => _points[_draggingIndex!] = d.localPosition);
                 }
               },
-              onPanEnd: (_) => setState(() => _draggingIndex = null),
+              onPointerUp: (_) => setState(() => _draggingIndex = null),
+              child: GestureDetector(
               onDoubleTapDown: (d) {
                 final near = _findNearVertex(d.localPosition);
                 if (near != null) {
-                  // Double tap near vertex: Start dragging
                   _startDrag(near);
                 } else {
-                  // Double tap empty space: Add new vertex
                   _addPoint(d.localPosition);
                 }
               },
@@ -145,6 +139,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
                 painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex),
               ),
             ),
+          ),
           ),
         ),
         // Color legend
