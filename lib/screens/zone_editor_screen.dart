@@ -103,11 +103,11 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final side = min(constraints.maxWidth, constraints.maxHeight);
-              final scale = side / 8; // 8m range (-4 to +4)
-              final canvasSize = Size(side, side);
+              final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+              final scaleX = canvasSize.width / 8;
+              final scaleY = canvasSize.height / 8;
 
-              Offset toPixel(double mx, double my) => Offset((mx + 4) * scale, (my + 4) * scale);
+              Offset toPixel(double mx, double my) => Offset((mx + 4) * scaleX, (my + 4) * scaleY);
               final personDots = persons.map((p) => _PersonDot(id: p.trackId, pos: toPixel(p.posX, p.posY), confidence: p.confidence)).toList();
               final sensorDots = nodes.map((n) => _SensorDot(id: n.nodeId, pos: toPixel(n.posX, n.posY))).toList();
 
@@ -208,11 +208,12 @@ class _RoomPainter extends CustomPainter {
     final grid = Paint()..color = Colors.white.withValues(alpha: 0.06)..strokeWidth = 0.5;
     final axisPaint = Paint()..color = Colors.white.withValues(alpha: 0.15)..strokeWidth = 1;
     final textStyle = TextStyle(color: Colors.grey.shade600, fontSize: 9);
-    final step = size.width / 8;
+    final stepX = size.width / 8;
+    final stepY = size.height / 8;
 
     for (int i = 0; i <= 8; i++) {
-      final x = i * step;
-      final y = i * step;
+      final x = i * stepX;
+      final y = i * stepY;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
@@ -221,14 +222,14 @@ class _RoomPainter extends CustomPainter {
     canvas.drawLine(Offset(origin.dx, 0), Offset(origin.dx, size.height), axisPaint);
 
     for (int m = -4; m <= 4; m++) {
-      final x = (m + 4) * step;
+      final x = (m + 4) * stepX;
       final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, Offset(x - tp.width / 2, origin.dy + 2));
     }
     for (int m = -4; m <= 4; m++) {
       if (m == 0) continue;
-      final y = (m + 4) * step;
+      final y = (m + 4) * stepY;
       final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, Offset(origin.dx + 2, y - tp.height / 2));
