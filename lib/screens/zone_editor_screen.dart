@@ -19,11 +19,6 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
   final _nameController = TextEditingController();
   int? _draggingIndex;
 
-  static const double _meterToPixel = 50;
-  static const double _offset = 4;
-
-  Offset _toPixel(double mx, double my) => Offset((mx + _offset) * _meterToPixel, (my + _offset) * _meterToPixel);
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -59,7 +54,7 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: Text(s.getString('z_editor_cancel'))),
           FilledButton(onPressed: () {
             final name = _nameController.text.isEmpty ? '${s.getString("z_editor_default_name")}${Random().nextInt(100)}' : _nameController.text;
-            ref.read(appStateProvider.notifier).addZone(CustomZone(                    id: DateTime.now().microsecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
+            ref.read(appStateProvider.notifier).addZone(CustomZone(id: DateTime.now().microsecondsSinceEpoch.toString(), name: name, points: List.from(_points)));
             _nameController.clear(); _points.clear(); _draggingIndex = null;
             Navigator.pop(context); setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.format('z_editor_saved', args: {'name': name}))));
@@ -78,9 +73,6 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
     final signalField = state.latestUpdate?.signalField;
     final nodes = state.latestUpdate?.nodes ?? [];
 
-    final personDots = persons.map((p) => _PersonDot(id: p.trackId, pos: _toPixel(p.posX, p.posY), confidence: p.confidence)).toList();
-    final sensorDots = nodes.map((n) => _SensorDot(id: n.nodeId, pos: _toPixel(n.posX, n.posY))).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: Text(s.getString('z_editor_title')),
@@ -91,7 +83,6 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
         ],
       ),
       body: Column(children: [
-        // Top info bar
         Container(
           padding: const EdgeInsets.all(10),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -102,47 +93,57 @@ class _ZoneEditorScreenState extends ConsumerState<ZoneEditorScreen> {
               style: TextStyle(fontSize: 12, color: _draggingIndex != null ? Colors.yellow : Colors.grey.shade400),
             ),
             const Spacer(),
-            _infoChip(isConnected ? '检测 ${personDots.length} 人' : '未连接', isConnected ? Colors.green : Colors.grey),
+            _infoChip(isConnected ? '检测 ${persons.length} 人' : '未连接', isConnected ? Colors.green : Colors.grey),
             const SizedBox(width: 6),
-            if (sensorDots.isNotEmpty) _infoChip('传感器 ${sensorDots.length}', Colors.blue),
+            if (nodes.isNotEmpty) _infoChip('传感器 ${nodes.length}', Colors.blue),
             const SizedBox(width: 6),
             if (_points.length >= 3) _infoChip('可闭合', Colors.green.shade300),
           ]),
         ),
-        // Canvas
         Expanded(
-            child: InteractiveViewer(
-            minScale: 0.5, maxScale: 3.0,
-            panEnabled: _draggingIndex == null,
-            child: Listener(
-              onPointerDown: (d) {
-                final near = _findNearVertex(d.localPosition);
-                if (near != null) _startDrag(near);
-              },
-              onPointerMove: (d) {
-                if (_draggingIndex != null) {
-                  setState(() => _points[_draggingIndex!] = d.localPosition);
-                }
-              },
-              onPointerUp: (_) => setState(() => _draggingIndex = null),
-              child: GestureDetector(
-              onDoubleTapDown: (d) {
-                final near = _findNearVertex(d.localPosition);
-                if (near != null) {
-                  _startDrag(near);
-                } else {
-                  _addPoint(d.localPosition);
-                }
-              },
-              child: CustomPaint(
-                size: const Size(400, 400),
-                painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex),
-              ),
-            ),
-          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final side = min(constraints.maxWidth, constraints.maxHeight);
+              final scale = side / 8; // 8m range (-4 to +4)
+              final canvasSize = Size(side, side);
+
+              Offset toPixel(double mx, double my) => Offset((mx + 4) * scale, (my + 4) * scale);
+              final personDots = persons.map((p) => _PersonDot(id: p.trackId, pos: toPixel(p.posX, p.posY), confidence: p.confidence)).toList();
+              final sensorDots = nodes.map((n) => _SensorDot(id: n.nodeId, pos: toPixel(n.posX, n.posY))).toList();
+
+              return InteractiveViewer(
+                minScale: 0.5, maxScale: 3.0,
+                panEnabled: _draggingIndex == null,
+                child: Listener(
+                  onPointerDown: (d) {
+                    final near = _findNearVertex(d.localPosition);
+                    if (near != null) _startDrag(near);
+                  },
+                  onPointerMove: (d) {
+                    if (_draggingIndex != null) {
+                      setState(() => _points[_draggingIndex!] = d.localPosition);
+                    }
+                  },
+                  onPointerUp: (_) => setState(() => _draggingIndex = null),
+                  child: GestureDetector(
+                    onDoubleTapDown: (d) {
+                      final near = _findNearVertex(d.localPosition);
+                      if (near != null) {
+                        _startDrag(near);
+                      } else {
+                        _addPoint(d.localPosition);
+                      }
+                    },
+                    child: CustomPaint(
+                      size: canvasSize,
+                      painter: _RoomPainter(points: _points, persons: personDots, sensors: sensorDots, signalField: signalField, draggingIndex: _draggingIndex),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
-        // Color legend
         Container(
           height: 28,
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -185,9 +186,8 @@ class _RoomPainter extends CustomPainter {
 
   _RoomPainter({required this.points, required this.persons, required this.sensors, this.signalField, this.draggingIndex});
 
-  // Color scale: blue (weak) → green → yellow → orange → red (strong)
   static Color _heatColor(double t) {
-    if (t <= 0) return const Color(0xFF1a237e); // deep blue
+    if (t <= 0) return const Color(0xFF1a237e);
     if (t >= 1) return Colors.red;
     if (t < 0.25) return Color.lerp(const Color(0xFF1a237e), Colors.blue, t * 4)!;
     if (t < 0.5) return Color.lerp(Colors.blue, Colors.green, (t - 0.25) * 4)!;
@@ -197,19 +197,10 @@ class _RoomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Layer 1: Coordinate axes
     _drawAxes(canvas, size);
-
-    // Layer 2: Heatmap background
     _drawHeatmap(canvas, size);
-
-    // Layer 3: Sensor markers
-    _drawSensors(canvas);
-
-    // Layer 4: Person crosshairs
-    _drawPersons(canvas);
-
-    // Layer 5: User polygon
+    _drawSensors(canvas, size);
+    _drawPersons(canvas, size);
     _drawPolygon(canvas);
   }
 
@@ -217,30 +208,27 @@ class _RoomPainter extends CustomPainter {
     final grid = Paint()..color = Colors.white.withValues(alpha: 0.06)..strokeWidth = 0.5;
     final axisPaint = Paint()..color = Colors.white.withValues(alpha: 0.15)..strokeWidth = 1;
     final textStyle = TextStyle(color: Colors.grey.shade600, fontSize: 9);
+    final step = size.width / 8;
 
-    // Grid lines every 1 meter
     for (int i = 0; i <= 8; i++) {
-      final x = i * 50.0;
-      final y = i * 50.0;
+      final x = i * step;
+      final y = i * step;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
-
-    // Axis origin lines
-    final origin = Offset(200, 200); // (0m, 0m)
+    final origin = Offset(size.width / 2, size.height / 2);
     canvas.drawLine(Offset(0, origin.dy), Offset(size.width, origin.dy), axisPaint);
     canvas.drawLine(Offset(origin.dx, 0), Offset(origin.dx, size.height), axisPaint);
 
-    // Axis labels
     for (int m = -4; m <= 4; m++) {
-      final x = (m + 4) * 50.0;
+      final x = (m + 4) * step;
       final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, Offset(x - tp.width / 2, origin.dy + 2));
     }
     for (int m = -4; m <= 4; m++) {
-      if (m == 0) continue; // skip origin overlap
-      final y = (m + 4) * 50.0;
+      if (m == 0) continue;
+      final y = (m + 4) * step;
       final tp = TextPainter(text: TextSpan(text: '${m}m', style: textStyle), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, Offset(origin.dx + 2, y - tp.height / 2));
@@ -250,10 +238,8 @@ class _RoomPainter extends CustomPainter {
   void _drawHeatmap(Canvas canvas, Size size) {
     final field = signalField;
     if (field == null || field.values.isEmpty) return;
-
     final cellW = size.width / field.width;
     final cellH = size.height / field.height;
-
     for (int row = 0; row < field.height; row++) {
       for (int col = 0; col < field.width; col++) {
         final val = field.valueAt(col, row);
@@ -263,7 +249,7 @@ class _RoomPainter extends CustomPainter {
     }
   }
 
-  void _drawSensors(Canvas canvas) {
+  void _drawSensors(Canvas canvas, Size size) {
     for (final s in sensors) {
       final fill = Paint()..color = Colors.blue.withValues(alpha: 0.3)..style = PaintingStyle.fill;
       final border = Paint()..color = Colors.blue..strokeWidth = 1.5..style = PaintingStyle.stroke;
@@ -273,14 +259,13 @@ class _RoomPainter extends CustomPainter {
       canvas.drawRect(rect, fill);
       canvas.drawRect(rect, border);
       canvas.restore();
-
       final tp = TextPainter(text: TextSpan(text: '传感器${s.id}', style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.w600)), textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas, s.pos + const Offset(10, -18));
     }
   }
 
-  void _drawPersons(Canvas canvas) {
+  void _drawPersons(Canvas canvas, Size size) {
     final dot = Paint()..style = PaintingStyle.fill;
     final cross = Paint()..strokeWidth = 1.5..style = PaintingStyle.stroke;
     for (final p in persons) {
