@@ -19,6 +19,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   final _hostController = TextEditingController(text: 'localhost');
   final _portController = TextEditingController(text: '3001');
   bool _paused = false;
+  bool _isAutoScroll = false;
 
   @override
   void dispose() {
@@ -39,7 +40,9 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
       if (next.log.isNotEmpty && !_paused) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
+            _isAutoScroll = true;
             _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            _isAutoScroll = false;
           }
         });
       }
@@ -81,7 +84,7 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   }
 
   void _onUserScroll(ScrollNotification notif) {
-    if (notif is! UserScrollNotification) return;
+    if (_isAutoScroll || notif is! UserScrollNotification) return;
     if (notif.direction == ScrollDirection.forward) {
       // 向上滑 → 暂停
       setState(() => _paused = true);
