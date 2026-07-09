@@ -13,6 +13,7 @@ void main() async {
   runApp(const ProviderScope(child: RuViewApp()));
 }
 
+/// RuView WiFi 感知 Flutter 客户端入口
 class RuViewApp extends ConsumerWidget {
   const RuViewApp({super.key});
 

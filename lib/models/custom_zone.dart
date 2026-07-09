@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+/// 用户自定义监控区域
 class CustomZone {
   final String id;
   final String name;

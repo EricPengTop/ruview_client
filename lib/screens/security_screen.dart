@@ -6,6 +6,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 安全监控页 (安全状态栏 + 安全日志 + 操作面板 + 信号质量趋势图)
 class SecurityScreen extends ConsumerWidget {
   const SecurityScreen({super.key});
 

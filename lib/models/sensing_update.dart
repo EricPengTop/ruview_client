@@ -1,6 +1,7 @@
 import 'pose_data.dart';
 import 'vital_signs.dart';
 
+/// WiFi 传感器节点信息 (位置 + 信号强度)
 class WifiNode {
   final int nodeId;
   final double posX;
@@ -28,6 +29,7 @@ class WifiNode {
   }
 }
 
+/// WiFi 信号场强度网格 (2D/3D热力图数据)
 class SignalField {
   final List<int> gridSize;
   final List<double> values;
@@ -53,6 +55,7 @@ class SignalField {
   }
 }
 
+/// RuView 单帧感知数据 (包含人体/节点/信号场/体征/特征)
 class SensingUpdate {
   final int tick;
   final double timestamp;

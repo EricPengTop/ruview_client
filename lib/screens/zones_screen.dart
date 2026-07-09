@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../services/ws_service.dart';
 import 'zone_editor_screen.dart';
 
+/// 区域监控页 (自定义区域列表 + 占用状态 + 编辑器入口)
 class ZonesScreen extends ConsumerWidget {
   const ZonesScreen({super.key});
 

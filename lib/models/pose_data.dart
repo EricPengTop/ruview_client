@@ -1,3 +1,4 @@
+/// COCO 17 人体关键点 (单关节)
 class Keypoint {
   final String name;
   final double x;
@@ -22,6 +23,7 @@ class Keypoint {
   );
 }
 
+/// 单个人员的 17 关节姿态检测结果 (含 XY 空间位置)
 class PoseDetection {
   final int trackId;
   final double confidence;

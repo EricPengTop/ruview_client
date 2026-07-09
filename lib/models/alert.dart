@@ -1,3 +1,4 @@
+/// 告警事件类型
 enum AlertType {
   presenceAppeared,
   presenceDisappeared,
@@ -115,6 +116,7 @@ extension AlertTypeLabel on AlertType {
   }
 }
 
+/// 告警事件 (类型 + 时间 + 详情)
 class Alert {
   final AlertType type;
   final DateTime time;

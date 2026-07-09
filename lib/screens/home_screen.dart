@@ -11,6 +11,7 @@ import 'alerts_screen.dart';
 import 'security_screen.dart';
 import 'settings_screen.dart';
 
+/// 主页面 (6 Tab 导航 + 连接管理 + 自动连接)
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 

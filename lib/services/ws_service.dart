@@ -10,16 +10,19 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../models/models.dart';
 import 'notification_service.dart';
 
+/// WebSocket 感知消息类型基类
 sealed class SensingMessage {
   const SensingMessage();
 }
 
+/// 感知数据更新消息
 class SensingUpdateMessage extends SensingMessage {
   final SensingUpdate update;
 
   const SensingUpdateMessage(this.update);
 }
 
+/// WebSocket 连接状态
 enum WsConnectionState { disconnected, connecting, connected }
 
 extension WsConnectionStateLabel on WsConnectionState {
@@ -37,6 +40,7 @@ extension WsConnectionStateLabel on WsConnectionState {
   bool get isConnected => this == WsConnectionState.connected;
 }
 
+/// WebSocket 连接管理器 (自动重连/心跳/消息流)
 class WebSocketService {
   final String host;
   final int port;
@@ -187,6 +191,7 @@ class WebSocketService {
   }
 }
 
+/// 单帧生命体征记录 (用于历史折线图)
 class VitalsRecord {
   final DateTime time;
   final double heartRate;
@@ -205,6 +210,7 @@ class VitalsRecord {
   });
 }
 
+/// 应用全局状态 (连接/感知/告警/设置/主题/区域等)
 class AppState {
   final WsConnectionState connectionState;
   final SensingUpdate? latestUpdate;
@@ -295,6 +301,7 @@ class AppState {
   );
 }
 
+/// 应用状态管理器 (Provider → UI 通知)
 class AppStateNotifier extends StateNotifier<AppState> {
   WebSocketService? _ws;
   StreamSubscription<SensingMessage>? _msgSub;

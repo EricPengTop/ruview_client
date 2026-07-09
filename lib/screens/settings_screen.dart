@@ -8,6 +8,7 @@ import '../services/ws_service.dart';
 import '../l10n/app_locale.dart';
 import 'debug_screen.dart';
 
+/// 设置页 (服务器连接/告警规则/隐私/MQTT/主题/语言/关于/开发者工具)
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 

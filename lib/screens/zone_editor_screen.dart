@@ -7,6 +7,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 区域编辑器 (热力图+传感器+人体+坐标轴画布 + 多边形绘制)
 class ZoneEditorScreen extends ConsumerStatefulWidget {
   const ZoneEditorScreen({super.key});
 

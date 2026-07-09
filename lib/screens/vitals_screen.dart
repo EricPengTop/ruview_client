@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_locale.dart';
 import '../services/ws_service.dart';
 
+/// 生命体征页 (心率/呼吸率实时折线图 + 暂停回放 + CSV导出 + 健康报告)
 class VitalsScreen extends ConsumerWidget {
   const VitalsScreen({super.key});
 

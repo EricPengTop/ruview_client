@@ -5,6 +5,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 开发者调试页面 (WebSocket日志/连接管理/数据预览)
 class DebugScreen extends ConsumerStatefulWidget {
   const DebugScreen({super.key});
 

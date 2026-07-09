@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+/// 本地推送通知服务 (macOS/Android)
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
 

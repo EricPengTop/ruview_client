@@ -5,6 +5,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 人体姿态页 (COCO 17关节骨架绘制 + 详情弹窗)
 class PoseScreen extends ConsumerWidget {
   const PoseScreen({super.key});
 

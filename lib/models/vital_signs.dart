@@ -1,3 +1,4 @@
+/// 生命体征数据 (心率/呼吸率 + 置信度)
 class VitalSigns {
   final double breathingRateBpm;
   final double heartRateBpm;
@@ -24,6 +25,7 @@ class VitalSigns {
   );
 }
 
+/// 人体存在分类结果
 class Classification {
   final bool presence;
   final String motionLevel;
@@ -42,6 +44,7 @@ class Classification {
   );
 }
 
+/// CSI 信号特征 (RSSI/功率谱/变化点等)
 class Features {
   final double meanRssi;
   final double variance;

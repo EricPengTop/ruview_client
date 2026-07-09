@@ -5,6 +5,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 告警中心 (告警时间线 + 类型图标/颜色 + 未读角标)
 class AlertsScreen extends ConsumerWidget {
   const AlertsScreen({super.key});
 

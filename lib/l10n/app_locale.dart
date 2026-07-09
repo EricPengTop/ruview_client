@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/ws_service.dart';
 
+/// 国际化语言
 enum AppLocale { zh, en }
 
+/// 中英双语字典 (key-value 查表 + 模板替换)
 class AppStrings {
   final AppLocale locale;
 

@@ -5,6 +5,7 @@ import '../l10n/app_locale.dart';
 import '../models/models.dart';
 import '../services/ws_service.dart';
 
+/// 概览仪表盘 (人体存在/人数/运动/信号/RSSI)
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
