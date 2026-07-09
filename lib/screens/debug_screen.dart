@@ -17,9 +17,6 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   final _scrollController = ScrollController();
   final _hostController = TextEditingController(text: 'localhost');
   final _portController = TextEditingController(text: '3001');
-  bool _paused = false;
-  bool _isAutoScroll = false;
-  double _lastUserPixel = 0;
 
   @override
   void dispose() {
@@ -37,12 +34,13 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     final isConnected = state.connectionState.isConnected;
 
     ref.listen(appStateProvider, (prev, next) {
-      if (next.log.isNotEmpty && !_paused) {
+      if (next.log.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            _isAutoScroll = true;
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-            _isAutoScroll = false;
+            final pos = _scrollController.position;
+            if (pos.pixels >= pos.maxScrollExtent - 5) {
+              _scrollController.jumpTo(pos.maxScrollExtent);
+            }
           }
         });
       }
@@ -81,23 +79,6 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
         ],
       ),
     );
-  }
-
-  void _onUserScroll(ScrollNotification notif) {
-    if (_isAutoScroll) return;
-
-    if (notif is ScrollUpdateNotification && notif.dragDetails != null) {
-      final pos = _scrollController.position;
-      final goingDown = pos.pixels > _lastUserPixel;
-      _lastUserPixel = pos.pixels;
-      setState(() => _paused = !goingDown);
-    } else if (notif is ScrollEndNotification && notif.dragDetails != null) {
-      final pos = _scrollController.position;
-      if (pos.pixels >= pos.maxScrollExtent - 5) {
-        setState(() => _paused = false);
-        _lastUserPixel = pos.pixels;
-      }
-    }
   }
 
   Widget _buildConnectionChip(AppStateNotifier notifier, bool isConnected, AppStrings s) {
@@ -172,32 +153,26 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
   Widget _buildLogView(List<String> log, AppStrings s) {
     if (log.isEmpty) return Center(child: Text(s.getString('debug_no_messages')));
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notif) {
-        _onUserScroll(notif);
-        return false;
+    return ListView.builder(
+      controller: _scrollController,
+      itemCount: log.length,
+      itemBuilder: (context, i) {
+        final entry = log[i];
+        final isError = entry.contains('错误:');
+        final isConnected = entry.contains('连接状态: 已连接');
+        Color? textColor;
+        if (isError) {
+          textColor = Colors.red.shade300;
+        } else if (isConnected) {
+          textColor = Colors.green.shade300;
+        } else if (entry.contains('连接状态:')) {
+          textColor = Colors.orange.shade300;
+        }
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
+        );
       },
-      child: ListView.builder(
-        controller: _scrollController,
-        itemCount: log.length,
-        itemBuilder: (context, i) {
-          final entry = log[i];
-          final isError = entry.contains('错误:');
-          final isConnected = entry.contains('连接状态: 已连接');
-          Color? textColor;
-          if (isError) {
-            textColor = Colors.red.shade300;
-          } else if (isConnected) {
-            textColor = Colors.green.shade300;
-          } else if (entry.contains('连接状态:')) {
-            textColor = Colors.orange.shade300;
-          }
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            child: Text(entry, style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: textColor)),
-          );
-        },
-      ),
     );
   }
 }
