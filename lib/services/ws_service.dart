@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/models.dart';
@@ -318,6 +319,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
         connectionState: connState,
         log: [...state.log, line],
       );
+      if (connState.isConnected) {
+        _saveConnection(host, port);
+      }
     });
 
     _errSub = _ws!.errors.listen((err) {
@@ -439,6 +443,20 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void disconnect() {
     _ws?.disconnect();
+  }
+
+  void _saveConnection(String host, int port) {
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('ruview_host', host);
+      prefs.setInt('ruview_port', port);
+    });
+  }
+
+  Future<void> autoConnect() async {
+    final prefs = await SharedPreferences.getInstance();
+    final host = prefs.getString('ruview_host') ?? 'localhost';
+    final port = prefs.getInt('ruview_port') ?? 3001;
+    connect(host, port);
   }
 
   void clearLog() {
